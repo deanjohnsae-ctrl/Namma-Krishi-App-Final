@@ -1,0 +1,14 @@
+{
+  "name": "commodity-dashboard-lite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static GitHub Pages commodity dashboard backed by exported SQLite data.",
+  "type": "commonjs",
+  "scripts": {
+    "build:data": "node scripts/build_static_site.js",
+    "check": "node --check app.js && node --check scripts/build_static_site.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0"
+  }
+}

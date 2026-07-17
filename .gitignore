@@ -1,0 +1,6 @@
+node_modules/
+.playwright-cli/
+data/*.db-shm
+data/*.db-wal
+.DS_Store
+Thumbs.db
