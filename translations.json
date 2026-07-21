@@ -21,6 +21,14 @@
       "en": "Try Tomato, Mysuru, or Local",
       "kn": "ಟೊಮೇಟೊ, ಮೈಸೂರು, ಅಥವಾ ಸ್ಥಳೀಯ ಎಂದು ಪ್ರಯತ್ನಿಸಿ"
     },
+    "search_placeholder_terms": {
+      "en": ["Tomato", "Local", "Mysuru"],
+      "kn": ["ಟೊಮೇಟೊ", "ಸ್ಥಳೀಯ", "ಮೈಸೂರು"]
+    },
+    "search_placeholder_prefix": {
+      "en": "Search",
+      "kn": "ಹುಡುಕಿ"
+    },
     "category_title": {
       "en": "Quick pick your commodity below.",
       "kn": "ನಿಮ್ಮ ಸರಕನ್ನು ಕೆಳಗೆ ತ್ವರಿತವಾಗಿ ಆಯ್ಕೆ ಮಾಡಿ."
@@ -132,6 +140,18 @@
     "refine_results": {
       "en": "Refine results",
       "kn": "ಫಲಿತಾಂಶಗಳನ್ನು ಪರಿಷ್ಕರಿಸಿ"
+    },
+    "filter_helper_empty": {
+      "en": "Select one or more filters to narrow the results.",
+      "kn": "ಫಲಿತಾಂಶಗಳನ್ನು ಸೀಮಿತಗೊಳಿಸಲು ಒಂದು ಅಥವಾ ಹೆಚ್ಚಿನ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ."
+    },
+    "filter_helper_ready_one": {
+      "en": "Ready to apply {count} filter.",
+      "kn": "{count} ಫಿಲ್ಟರ್ ಅನ್ವಯಿಸಲು ಸಿದ್ಧವಾಗಿದೆ."
+    },
+    "filter_helper_ready_many": {
+      "en": "Ready to apply {count} filters.",
+      "kn": "{count} ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಅನ್ವಯಿಸಲು ಸಿದ್ಧವಾಗಿದೆ."
     },
     "close_filters_aria": {
       "en": "Close filters",

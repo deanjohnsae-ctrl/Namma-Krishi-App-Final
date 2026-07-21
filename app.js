@@ -373,6 +373,7 @@
     state.suggestions = [];
     invalidateDerivedDataCaches();
     if (route.view === "table") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       primeTableArrivalUi();
     } else {
       clearFilterHintTimers();
@@ -577,6 +578,10 @@
 
   function handleSearchInput(event) {
     state.query = event.target.value;
+    const inputWrap = event.target.closest(".search-input-wrap");
+    if (inputWrap) {
+      inputWrap.classList.toggle("has-value", Boolean(state.query.trim()));
+    }
     setPendingSearchUiState(state.query);
     syncSearchSuggestionsUi();
     scheduleSearchInputWork(state.query);
@@ -769,7 +774,7 @@
   }
 
   function isCompactViewport() {
-    return window.innerWidth <= 720;
+    return window.innerWidth <= 767;
   }
 
   function getRowsForCurrentView() {
@@ -1020,20 +1025,20 @@
             dashArray: "",
           },
           {
-            kind: "min",
-            key: "minPrice",
-            label: buildRsPerUnitLabel("Min Price", priceUnit),
-            color: PRICE_COLORS.min,
-            strokeWidth: "3",
-            dashArray: "",
-          },
-          {
             kind: "modal",
             key: "modalPrice",
             label: buildRsPerUnitLabel("Average Price", priceUnit),
             color: PRICE_COLORS.modal,
             strokeWidth: "3",
             dashArray: "10 6",
+          },
+          {
+            kind: "min",
+            key: "minPrice",
+            label: buildRsPerUnitLabel("Min Price", priceUnit),
+            color: PRICE_COLORS.min,
+            strokeWidth: "3",
+            dashArray: "",
           },
         ],
       };
@@ -1052,20 +1057,20 @@
           dashArray: "",
         },
         {
-          kind: "min",
-          key: "minPrice",
-          label: buildRsPerUnitLabel("Min Price", priceUnit),
-          color: PRICE_COLORS.min,
-          strokeWidth: "3",
-          dashArray: "",
-        },
-        {
           kind: "modal",
           key: "modalPrice",
           label: buildRsPerUnitLabel("Modal Price", priceUnit),
           color: PRICE_COLORS.modal,
           strokeWidth: "3",
           dashArray: "10 6",
+        },
+        {
+          kind: "min",
+          key: "minPrice",
+          label: buildRsPerUnitLabel("Min Price", priceUnit),
+          color: PRICE_COLORS.min,
+          strokeWidth: "3",
+          dashArray: "",
         },
       ],
     };
@@ -2274,11 +2279,6 @@
             <div class="axis-note">${escapeHtml(getTrendNote(row))}</div>
           </div>
         </div>
-        <div class="history-collapse-wrap">
-          <button type="button" class="history-collapse-button" data-close-history="${escapeAttribute(row.rowKey)}" aria-label="${escapeAttribute(getUiText("collapse_price_history_aria", "Collapse price history"))}">
-            <span class="history-collapse-arrow">&#9652;</span>
-          </button>
-        </div>
       </section>
     `;
   }
@@ -2291,28 +2291,13 @@
     const priceMode = getRowPriceMode(rows[0]);
     const chartMetricKeys = getChartMetricKeys(rows[0]);
     const canonicalKey = getCanonicalPriceKey(rows[0]);
-    const axisWidth = 25;
-    const chartRows = rows.length === 1
-      ? [
-          {
-            reportDate: rows[0].reportDate,
-            minPrice: 0,
-            maxPrice: 0,
-            modalPrice: 0,
-            canonicalPrice: 0,
-            isBaseline: true,
-          },
-          {
-            ...rows[0],
-            isBaseline: false,
-          },
-        ]
-      : rows.map((row) => ({ ...row, isBaseline: false }));
-    const width = Math.max(700, 120 + (chartRows.length - 1) * 96);
-    const height = 320;
-    const paddingX = 38;
-    const paddingTop = 18;
-    const paddingBottom = 44;
+    const axisWidth = 48;
+    const chartRows = rows.map((row) => ({ ...row, isBaseline: false }));
+    const width = Math.max(600, 120 + (chartRows.length - 1) * 96);
+    const height = 250;
+    const paddingX = 42;
+    const paddingTop = 16;
+    const paddingBottom = 34;
     const values = chartRows.flatMap((entry) => {
       return chartMetricKeys
         .map((metric) => entry[metric.key])
@@ -2323,7 +2308,7 @@
 
     const toX = (index) => paddingX + xStep * index;
     const toY = (value) => {
-      const normalized = value / chartScale.maxTick;
+      const normalized = (value - chartScale.minTick) / (chartScale.maxTick - chartScale.minTick);
       return height - paddingBottom - normalized * (height - paddingTop - paddingBottom);
     };
 
@@ -2342,7 +2327,7 @@
       return `
         <g>
           <line x1="${axisWidth - 8}" y1="${y}" x2="${axisWidth}" y2="${y}" stroke="#c2c8da" stroke-width="1.5" />
-          <text x="${axisWidth - 22}" y="${y + 14}" text-anchor="middle" fill="#5b6654" font-size="11" transform="rotate(-90 ${axisWidth - 22} ${y})">${escapeHtml(formatCurrency(tick))}</text>
+          <text x="${axisWidth - 6}" y="${y + 4}" text-anchor="end" fill="#5b6654" font-size="11">${escapeHtml(formatCurrency(tick))}</text>
         </g>
       `;
     }).join("");
@@ -2420,13 +2405,14 @@
   }
 
   function renderChartPointCircle(x, y, color, isActive) {
-    return `<circle cx="${x}" cy="${y}" r="${isActive ? 7 : 5.5}" fill="${isActive ? color : "#fffaf6"}" stroke="${color}" stroke-width="2.5" />`;
+    return `<circle cx="${x}" cy="${y}" r="${isActive ? 5.5 : 4}" fill="${isActive ? color : "#fffaf6"}" stroke="${color}" stroke-width="2.25" />`;
   }
 
   function buildChartScale(values) {
     const maxValue = Math.max(...values, 0);
+    const minValue = Math.min(...values, maxValue);
     const tickCount = 4;
-    const rawStep = maxValue / tickCount || 1;
+    const rawStep = (maxValue - minValue) / tickCount || maxValue / tickCount || 1;
     const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const normalized = rawStep / magnitude;
     let niceNormalized = 1;
@@ -2440,9 +2426,10 @@
     }
 
     const step = Math.max(1, niceNormalized * magnitude);
-    const maxTick = Math.max(step, Math.ceil(maxValue / step) * step);
+    const minTick = Math.max(0, Math.floor(minValue / step) * step);
+    const maxTick = Math.max(minTick + step, Math.ceil(maxValue / step) * step);
     const ticks = [];
-    for (let tick = 0; tick <= maxTick; tick += step) {
+    for (let tick = minTick; tick <= maxTick; tick += step) {
       ticks.push(tick);
     }
 
@@ -2450,7 +2437,7 @@
       ticks.push(maxTick);
     }
 
-    return { step, maxTick, ticks };
+    return { step, minTick, maxTick, ticks };
   }
 
   function getActiveHistoryPoint(rows) {
@@ -2596,16 +2583,6 @@
           state.activeChartDate = null;
           state.shouldPrimeExpandedHistory = getActiveResultsLayout() === "table";
         }
-        render();
-      });
-    });
-
-    document.querySelectorAll("[data-close-history]").forEach((button) => {
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        state.expandedRowKey = null;
-        state.activeChartDate = null;
-        state.shouldPrimeExpandedHistory = false;
         render();
       });
     });
@@ -2756,12 +2733,9 @@
     syncExpandedHistoryLayout();
 
     if (state.shouldScrollTableIntoView && state.route.view === "table" && state.context) {
-      const tableWrap = document.querySelector("[data-preserve-scroll-id='table-wrap']");
-      if (tableWrap) {
-        tableWrap.scrollIntoView({ block: "start" });
-        state.shouldScrollTableIntoView = false;
-        updateTableWrapHeight();
-      }
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      state.shouldScrollTableIntoView = false;
+      updateTableWrapHeight();
     }
 
     if (state.isSearchOpen) {
@@ -2809,11 +2783,13 @@
 
     let frameId = null;
     let previousScrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+    let visibilityHoldUntil = 0;
 
     const applyVisibility = (isVisible) => {
       topbar.classList.toggle("topbar-hidden", !isVisible);
       siteShell.classList.toggle("topbar-collapsed", !isVisible);
       state.isTopbarVisible = isVisible;
+      visibilityHoldUntil = performance.now() + 280;
     };
 
     const syncVisibility = () => {
@@ -2822,6 +2798,12 @@
       const delta = currentScrollY - previousScrollY;
       const threshold = 10;
       const revealThreshold = topbar.offsetHeight + 12;
+
+      if (performance.now() < visibilityHoldUntil) {
+        previousScrollY = currentScrollY;
+        return;
+      }
+
       let nextVisible = state.isTopbarVisible;
 
       if (state.isSearchOpen || state.isFilterModalOpen || currentScrollY <= revealThreshold) {
@@ -3000,7 +2982,7 @@
       return;
     }
 
-    if (getActiveResultsLayout() === "table" || window.innerWidth > 720) {
+    if (getActiveResultsLayout() === "table" || window.innerWidth > 767) {
       tableWrap.style.removeProperty("--table-wrap-height");
       return;
     }
@@ -3119,7 +3101,7 @@
     const activeX = Number(chartScroll.dataset.chartActiveX || 0);
     const xStep = Number(chartScroll.dataset.chartXStep || 0);
     const pointCount = Number(chartScroll.dataset.chartPointCount || 0);
-    const anchorRatio = window.innerWidth <= 720 ? 0.8 : 0.84;
+    const anchorRatio = window.innerWidth <= 767 ? 0.8 : 0.84;
     const baseTarget = activeX - chartScroll.clientWidth * anchorRatio;
     const contextOffset = pointCount > 1 ? xStep * 1.2 : 0;
     const target = baseTarget - contextOffset;
@@ -3144,7 +3126,7 @@
         : Math.floor(layout.getBoundingClientRect().width);
 
       let layoutMode = "mobile";
-      if (window.innerWidth > 720) {
+      if (window.innerWidth > 767) {
         layoutMode = availableWidth >= 1180 ? "wide" : "compact";
       }
 
@@ -3153,7 +3135,7 @@
       chartSummary.dataset.chartSummaryLayout = layoutMode;
 
       if (layoutMode === "mobile") {
-        const mobileWidth = Math.max(220, availableWidth - 12);
+        const mobileWidth = Math.min(availableWidth, Math.max(220, availableWidth - 12));
         summaryShell.style.width = `${mobileWidth}px`;
         summaryShell.style.maxWidth = `${mobileWidth}px`;
       } else {
@@ -3431,6 +3413,11 @@
       return entry.kn;
     }
     return entry.en || fallback || key;
+  }
+
+  function getSearchPlaceholderTerms() {
+    const terms = getUiText("search_placeholder_terms", ["Tomato", "Local", "Mysuru"]);
+    return Array.isArray(terms) && terms.length ? terms : ["Tomato", "Local", "Mysuru"];
   }
 
   function getFieldLabel(field) {
@@ -3763,7 +3750,6 @@
         ` : `
           <main class="page results-page">
             ${renderResultsToolbar(rows)}
-            ${renderActiveFilterSummary()}
 
             <section class="results-content-shell">
               ${renderBackToTopButton(rows)}
@@ -3803,22 +3789,32 @@
   }
 
   function renderSearchField({ autoFocus = false, canClose = false, entryMode = "overlay" } = {}) {
+    const placeholderTerms = getSearchPlaceholderTerms();
+    const hasQuery = Boolean(state.query.trim());
     return `
       <div class="search-field" data-search-root>
         <span class="search-submit" aria-hidden="true">
           <img class="search-icon" src="${escapeAttribute(ASSETS.search)}" alt="">
         </span>
-        <input
-          type="text"
-          autocomplete="off"
-          enterkeyhint="search"
-          placeholder="${escapeAttribute(getUiText("search_placeholder", "Try Tomato, Mysuru, or Local"))}"
-          value="${escapeAttribute(state.query)}"
-          data-global-search="true"
-          data-search-entry="${escapeAttribute(entryMode)}"
-          ${autoFocus ? 'data-search-autofocus="true"' : ""}
-          aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}"
-        >
+        <div class="search-input-wrap${hasQuery ? " has-value" : ""}">
+          <input
+            type="text"
+            autocomplete="off"
+            enterkeyhint="search"
+            placeholder=""
+            value="${escapeAttribute(state.query)}"
+            data-global-search="true"
+            data-search-entry="${escapeAttribute(entryMode)}"
+            ${autoFocus ? 'data-search-autofocus="true"' : ""}
+            aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}"
+          >
+          <span class="search-placeholder" aria-hidden="true">
+            <span class="search-placeholder-label">${escapeHtml(getUiText("search_placeholder_prefix", "Search"))}</span>
+            <span class="search-placeholder-terms">
+              ${placeholderTerms.map((term) => `<span class="search-placeholder-item">${escapeHtml(term)}</span>`).join("")}
+            </span>
+          </span>
+        </div>
         ${canClose ? `
           <button type="button" class="search-close" data-close-search="true" aria-label="${escapeAttribute(getUiText("close_search_aria", "Close search"))}">
             <img src="${escapeAttribute(ASSETS.close)}" alt="">
@@ -4075,6 +4071,7 @@
           </div>
           ${renderFilterLauncher()}
         </div>
+        ${renderActiveFilterSummary()}
       </section>
     `;
   }
@@ -4210,10 +4207,12 @@
   function getFilterModalHelperCopy() {
     const selectedCount = getDraftSelectedFilterCount();
     if (selectedCount > 0) {
-      return `Ready to apply ${selectedCount} ${selectedCount === 1 ? "filter" : "filters"}.`;
+      const key = selectedCount === 1 ? "filter_helper_ready_one" : "filter_helper_ready_many";
+      return getUiText(key, `Ready to apply ${selectedCount} ${selectedCount === 1 ? "filter" : "filters"}.`)
+        .replace("{count}", String(selectedCount));
     }
 
-    return "Select one or more filters to narrow the results.";
+    return getUiText("filter_helper_empty", "Select one or more filters to narrow the results.");
   }
 
   function renderFilterField(field) {
@@ -4224,7 +4223,10 @@
     return `
       <div class="filter-group filter-modal-group">
         <div class="filter-line">
-          <span class="filter-line-label ${escapeAttribute(getFilterFieldToneClass(field))}">${escapeHtml(getFieldLabel(field))}</span>
+          <span class="filter-line-label ${escapeAttribute(getFilterFieldToneClass(field))}">
+            ${field === "market" || field === "variety" ? `<img class="filter-line-icon" src="${escapeAttribute(getSuggestionIcon(field))}" alt="" aria-hidden="true">` : ""}
+            <span>${escapeHtml(getFieldLabel(field))}</span>
+          </span>
           <span class="line"></span>
         </div>
         <div data-filter-chip-zone="${field}">
