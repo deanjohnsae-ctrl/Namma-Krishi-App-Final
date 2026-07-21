@@ -84,6 +84,23 @@
     "Tur Dal": "🫘",
   };
 
+  const ASSETS = {
+    logo: "./assets/logo.svg",
+    search: "./assets/search.svg",
+    back: "./assets/back.svg",
+    filter: "./assets/filter.svg",
+    close: "./assets/close.svg",
+    heroBg: "./assets/hero-bg.png",
+    heroBgMobile: "./assets/hero-bg-mobile.png",
+    commodityThumb: "./assets/commodity-thumb.png",
+    marketThumb: "./assets/market-thumb.png",
+    categoryThumb: "./assets/category.png",
+    emptyState: "./assets/empty-state.svg",
+    suggestionCommodity: "./assets/suggestion-commodity.svg",
+    suggestionMarket: "./assets/suggestion-market.svg",
+    suggestionVariety: "./assets/suggestion-variety.svg",
+  };
+
   const state = {
     route: parseRoute(),
     query: "",
@@ -97,6 +114,11 @@
     pendingFilterSelection: null,
     activeFilterField: "",
     isFilterModalOpen: false,
+    isSearchOpen: false,
+    searchUiState: "idle",
+    searchIndexStatus: "loading",
+    isTopbarVisible: true,
+    showHomeTopbarSearch: false,
     showFilterHint: false,
     shouldScrollTableIntoView: false,
     shouldPrimeExpandedHistory: false,
@@ -129,6 +151,8 @@
   let renderFrameId = null;
   let stickyTableHeaderCleanup = null;
   let backToTopButtonCleanup = null;
+  let homeTopbarSearchCleanup = null;
+  let topbarVisibilityCleanup = null;
   let lockedBodyScrollY = null;
 
   document.addEventListener("click", handleDocumentClick);
@@ -187,16 +211,19 @@
         markets: payload.markets || [],
         varieties: payload.varieties || [],
       };
+      state.searchIndexStatus = "ready";
     } catch (error) {
       state.searchIndex = {
         commodities: [],
         markets: [],
         varieties: [],
       };
+      state.searchIndexStatus = "error";
     }
 
-    if (state.query.trim() && hasClientSearchIndex()) {
-      state.suggestions = buildLocalizedSearchResults(state.query.trim());
+    syncSearchResultsForQuery(state.query);
+    if (state.isSearchOpen) {
+      syncSearchSuggestionsUi();
     }
   }
 
@@ -287,6 +314,7 @@
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
     state.isFilterModalOpen = false;
+    state.isSearchOpen = false;
     state.showFilterHint = false;
     state.shouldScrollTableIntoView = false;
     state.shouldPrimeExpandedHistory = false;
@@ -316,6 +344,7 @@
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
     state.isFilterModalOpen = false;
+    state.isSearchOpen = false;
     state.showFilterHint = false;
     state.shouldScrollTableIntoView = false;
     state.shouldPrimeExpandedHistory = false;
@@ -349,22 +378,10 @@
     }
 
     const token = ++state.searchToken;
-    if (!query.trim()) {
-      state.suggestions = [];
-      syncSearchSuggestionsUi();
+    syncSearchResultsForQuery(query);
+    if (token !== state.searchToken) {
       return;
     }
-
-    if (hasClientSearchIndex()) {
-      if (token !== state.searchToken) {
-        return;
-      }
-      state.suggestions = buildLocalizedSearchResults(query.trim());
-      syncSearchSuggestionsUi();
-      return;
-    }
-
-    state.suggestions = [];
     syncSearchSuggestionsUi();
   }
 
@@ -510,6 +527,8 @@
 
   function handleSearchInput(event) {
     state.query = event.target.value;
+    setPendingSearchUiState(state.query);
+    syncSearchSuggestionsUi();
     scheduleSearchInputWork(state.query);
   }
 
@@ -528,6 +547,7 @@
 
   function handleHomeClick() {
     state.query = "";
+    state.isSearchOpen = false;
     navigate({
       view: "home",
       layout: "cards",
@@ -539,6 +559,7 @@
   }
 
   function openFilterModal() {
+    state.isSearchOpen = false;
     state.filterDrafts = cloneFilters(state.filters);
     state.filterSearches = buildInitialFilterSearches(state.context ? state.context.filters : []);
     state.pendingFilterSelection = null;
@@ -554,6 +575,33 @@
     state.activeFilterField = "";
     state.isFilterModalOpen = false;
     scheduleRender();
+  }
+
+  function openSearchPanel() {
+    if (state.isSearchOpen) {
+      return;
+    }
+
+    state.isSearchOpen = true;
+    syncSearchResultsForQuery(state.query);
+    scheduleRender();
+  }
+
+  function closeSearchPanel() {
+    state.isSearchOpen = false;
+    state.suggestions = [];
+    scheduleRender();
+  }
+
+  function retrySearchIndex() {
+    if (state.searchIndexStatus === "loading") {
+      return;
+    }
+
+    state.searchIndexStatus = "loading";
+    setPendingSearchUiState(state.query);
+    syncSearchSuggestionsUi();
+    loadSearchIndex();
   }
 
   function updateFilterSearch(name, value, selectionStart, selectionEnd) {
@@ -591,9 +639,9 @@
       chipZone.innerHTML = selected.length ? `
         <div class="filter-chip-row">
           ${selected.map((value) => `
-            <span class="filter-chip">
+            <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
               <span>${escapeHtml(translateEntity(field, value))}</span>
-              <button type="button" class="filter-chip-remove" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
+              <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
             </span>
           `).join("")}
         </div>
@@ -663,30 +711,11 @@
   }
 
   function setResultsLayout(layout) {
-    if (state.route.view !== "table") {
-      return;
-    }
-
-    const nextLayout = normalizeResultsLayout(layout);
-    if (nextLayout === normalizeResultsLayout(state.route.layout)) {
-      return;
-    }
-
-    const nextRoute = {
-      ...state.route,
-      layout: nextLayout,
-    };
-
-    state.route = nextRoute;
-    if (nextLayout !== "table") {
-      state.shouldPrimeExpandedHistory = false;
-    }
-    window.history.pushState({}, "", buildRouteUrl(nextRoute));
-    scheduleRender();
+    state.shouldPrimeExpandedHistory = false;
   }
 
   function getActiveResultsLayout() {
-    return normalizeResultsLayout(state.route.layout);
+    return "cards";
   }
 
   function isCompactViewport() {
@@ -1489,10 +1518,14 @@
 
   function syncSearchSuggestionsUi() {
     document.querySelectorAll("[data-search-suggestions]").forEach((node) => {
-      node.innerHTML = state.suggestions.length ? renderSuggestions() : "";
+      const searchUiState = getSearchUiState();
+      node.classList.toggle("is-active", searchUiState !== "hidden");
+      node.classList.toggle("is-scrollable", searchUiState === "ready");
+      node.innerHTML = renderSearchOverlayContent(searchUiState);
     });
 
     bindSuggestionEvents();
+    bindSearchStateEvents();
   }
 
   function getSuggestionLabel(result) {
@@ -1625,7 +1658,7 @@
     return `
       <div class="active-filter-summary" aria-label="${escapeAttribute(getUiText("filters_label", "Filters"))}">
         ${activeChips.map(({ field, value }) => `
-          <span class="filter-chip filter-chip-active">
+          <span class="filter-chip filter-chip-active ${escapeAttribute(getFilterFieldToneClass(field))}">
             <span>${escapeHtml(`${getFieldLabel(field)}: ${translateEntity(field, value)}`)}</span>
             <button type="button" class="filter-chip-remove" data-remove-active-filter="${field}" data-remove-active-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${getFieldLabel(field)} ${translateEntity(field, value)}`)}">&times;</button>
           </span>
@@ -1720,12 +1753,12 @@
     return options.map((value) => `
       <button
         type="button"
-        class="filter-search-option ${selected.includes(value) ? "is-selected" : ""}"
+        class="option-row filter-search-option ${selected.includes(value) ? "selected is-selected" : ""}"
         data-toggle-draft-filter="${field}"
         data-toggle-draft-value="${escapeAttribute(value)}"
       >
         <span>${escapeHtml(translateEntity(field, value))}</span>
-        ${selected.includes(value) ? `<span class="filter-option-check">&#10003;</span>` : ""}
+        <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check" aria-hidden="true"></span>' : ""}</span>
       </button>
     `).join("");
   }
@@ -2379,6 +2412,24 @@
       input.addEventListener("input", handleSearchInput);
     });
 
+    document.querySelectorAll("[data-search-entry]").forEach((input) => {
+      input.addEventListener("focus", () => {
+        if (input.dataset.searchEntry !== "overlay") {
+          openSearchPanel();
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-open-search]").forEach((button) => {
+      button.addEventListener("click", openSearchPanel);
+    });
+
+    document.querySelectorAll("[data-close-search]").forEach((button) => {
+      button.addEventListener("click", closeSearchPanel);
+    });
+
+    bindSearchStateEvents();
+
     document.querySelectorAll("[data-locale-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
         setLocale(button.dataset.localeToggle);
@@ -2524,6 +2575,17 @@
     });
   }
 
+  function bindSearchStateEvents() {
+    document.querySelectorAll("[data-retry-search-index]").forEach((button) => {
+      if (button.dataset.boundRetrySearchIndex === "true") {
+        return;
+      }
+
+      button.dataset.boundRetrySearchIndex = "true";
+      button.addEventListener("click", retrySearchIndex);
+    });
+  }
+
   function bindDraftFilterToggleEvents(root) {
     root.querySelectorAll("[data-toggle-draft-filter]").forEach((button) => {
       if (button.dataset.boundToggleDraftFilter === "true") {
@@ -2610,10 +2672,12 @@
   }
 
   function runPostRenderEffects() {
-    syncFilterModalPageLock();
+    syncPageOverlayLock();
+    syncTopbarVisibility();
     updateTableWrapHeight();
     syncFilterHintAnimation();
     syncBackToTopButton();
+    syncHomeTopbarSearchTrigger();
     syncActiveHomeCategoryViewport();
     if (getActiveResultsLayout() === "table") {
       syncStickyTableHeader();
@@ -2629,24 +2693,182 @@
         updateTableWrapHeight();
       }
     }
+
+    if (state.isSearchOpen) {
+      const searchInput = document.querySelector("[data-search-autofocus='true']");
+      if (searchInput && document.activeElement !== searchInput) {
+        searchInput.focus();
+        const length = searchInput.value.length;
+        searchInput.setSelectionRange(length, length);
+      }
+    }
   }
 
-  function syncFilterModalPageLock() {
-    if (state.isFilterModalOpen) {
+  function syncPageOverlayLock() {
+    if (state.isFilterModalOpen || state.isSearchOpen) {
       if (lockedBodyScrollY === null) {
         lockedBodyScrollY = window.scrollY;
       }
-      document.body.classList.add("filter-modal-open");
+      document.body.classList.add("page-overlay-open");
       document.body.style.top = `-${lockedBodyScrollY}px`;
       return;
     }
 
-    document.body.classList.remove("filter-modal-open");
+    document.body.classList.remove("page-overlay-open");
     document.body.style.top = "";
     if (lockedBodyScrollY !== null) {
       window.scrollTo(window.scrollX, lockedBodyScrollY);
       lockedBodyScrollY = null;
     }
+  }
+
+  function syncTopbarVisibility() {
+    if (topbarVisibilityCleanup) {
+      topbarVisibilityCleanup();
+      topbarVisibilityCleanup = null;
+    }
+
+    const topbar = document.querySelector(".topbar");
+    const siteShell = document.querySelector(".site-shell");
+    if (!topbar || !siteShell) {
+      if (!state.isTopbarVisible) {
+        state.isTopbarVisible = true;
+      }
+      return;
+    }
+
+    let frameId = null;
+    let previousScrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+
+    const applyVisibility = (isVisible) => {
+      topbar.classList.toggle("topbar-hidden", !isVisible);
+      siteShell.classList.toggle("topbar-collapsed", !isVisible);
+      state.isTopbarVisible = isVisible;
+    };
+
+    const syncVisibility = () => {
+      frameId = null;
+      const currentScrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+      const delta = currentScrollY - previousScrollY;
+      const threshold = 10;
+      const revealThreshold = topbar.offsetHeight + 12;
+      let nextVisible = state.isTopbarVisible;
+
+      if (state.isSearchOpen || state.isFilterModalOpen || currentScrollY <= revealThreshold) {
+        nextVisible = true;
+      } else if (delta >= threshold) {
+        nextVisible = false;
+      } else if (delta <= -threshold) {
+        nextVisible = true;
+      }
+
+      previousScrollY = currentScrollY;
+
+      if (state.isTopbarVisible !== nextVisible) {
+        applyVisibility(nextVisible);
+      }
+    };
+
+    const scheduleSync = () => {
+      if (frameId !== null) {
+        return;
+      }
+      frameId = window.requestAnimationFrame(syncVisibility);
+    };
+
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("scroll", scheduleSync, { passive: true });
+      window.visualViewport.addEventListener("resize", scheduleSync);
+    }
+
+    scheduleSync();
+
+    topbarVisibilityCleanup = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+
+      window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("scroll", scheduleSync);
+        window.visualViewport.removeEventListener("resize", scheduleSync);
+      }
+    };
+  }
+
+  function syncHomeTopbarSearchTrigger() {
+    if (homeTopbarSearchCleanup) {
+      homeTopbarSearchCleanup();
+      homeTopbarSearchCleanup = null;
+    }
+
+    if (state.route.view !== "home") {
+      if (state.showHomeTopbarSearch) {
+        state.showHomeTopbarSearch = false;
+      }
+      return;
+    }
+
+    const topbar = document.querySelector(".topbar");
+    const heroSearch = document.querySelector(".hero-copy > .search-field");
+    if (!topbar || !heroSearch) {
+      if (state.showHomeTopbarSearch) {
+        state.showHomeTopbarSearch = false;
+      }
+      return;
+    }
+
+    let frameId = null;
+
+    const syncVisibility = () => {
+      frameId = null;
+      const topbarBottom = topbar.getBoundingClientRect().bottom;
+      const heroSearchBottom = heroSearch.getBoundingClientRect().bottom;
+      const shouldShow = heroSearchBottom <= topbarBottom;
+
+      if (state.showHomeTopbarSearch !== shouldShow) {
+        state.showHomeTopbarSearch = shouldShow;
+        scheduleRender();
+      }
+    };
+
+    const scheduleSync = () => {
+      if (frameId !== null) {
+        return;
+      }
+      frameId = window.requestAnimationFrame(syncVisibility);
+    };
+
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("scroll", scheduleSync, { passive: true });
+      window.visualViewport.addEventListener("resize", scheduleSync);
+    }
+
+    scheduleSync();
+
+    homeTopbarSearchCleanup = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+
+      window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("scroll", scheduleSync);
+        window.visualViewport.removeEventListener("resize", scheduleSync);
+      }
+    };
   }
 
   function syncActiveHomeCategoryViewport() {
@@ -3185,6 +3407,55 @@
     });
   }
 
+  function getIdleSearchUiState() {
+    return state.searchIndexStatus === "error" ? "unavailable" : "idle";
+  }
+
+  function getSearchUiState() {
+    return state.searchUiState || "idle";
+  }
+
+  function setPendingSearchUiState(query) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      state.suggestions = [];
+      state.searchUiState = getIdleSearchUiState();
+      return;
+    }
+
+    if (state.searchIndexStatus === "error") {
+      state.suggestions = [];
+      state.searchUiState = "unavailable";
+      return;
+    }
+
+    state.searchUiState = "loading";
+  }
+
+  function syncSearchResultsForQuery(query) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      state.suggestions = [];
+      state.searchUiState = getIdleSearchUiState();
+      return;
+    }
+
+    if (state.searchIndexStatus === "error") {
+      state.suggestions = [];
+      state.searchUiState = "unavailable";
+      return;
+    }
+
+    if (!hasClientSearchIndex()) {
+      state.suggestions = [];
+      state.searchUiState = "loading";
+      return;
+    }
+
+    state.suggestions = buildLocalizedSearchResults(trimmedQuery);
+    state.searchUiState = state.suggestions.length ? "ready" : "empty";
+  }
+
   function invalidateDerivedDataCaches() {
     state.cachedVisibleRowsKey = "";
     state.cachedVisibleRows = [];
@@ -3395,5 +3666,705 @@
 
   function escapeAttribute(value) {
     return escapeHtml(value);
+  }
+
+  function render() {
+    document.documentElement.setAttribute("lang", state.locale === "kn" ? "kn" : "en");
+    document.documentElement.setAttribute("data-locale", state.locale);
+    const searchInputState = captureSearchInputState();
+    const filterInputState = captureFilterInputState();
+    const scrollState = captureScrollState();
+    const rows = state.route.view === "table" && state.context ? getRowsForCurrentView() : [];
+    teardownStickyTableHeader();
+
+    app.innerHTML = `
+      <div class="site-shell ${state.isTopbarVisible ? "" : "topbar-collapsed"}">
+        <header class="topbar ${state.isTopbarVisible ? "" : "topbar-hidden"}">
+          <div class="topbar-inner ${state.route.view === "home" ? "topbar-home" : "results-topbar-inner"}">
+            ${renderTopBar()}
+          </div>
+        </header>
+
+        ${state.route.view === "home" ? `
+          <main class="page home-page">
+            ${renderHomeHero()}
+            ${renderCategorySection()}
+          </main>
+        ` : `
+          <main class="page results-page">
+            ${renderResultsToolbar(rows)}
+            ${renderActiveFilterSummary()}
+
+            <section class="results-content-shell">
+              ${renderBackToTopButton(rows)}
+              <div class="table-wrap" data-preserve-scroll-id="table-wrap">
+                ${renderResults(rows)}
+              </div>
+            </section>
+          </main>
+        `}
+
+        ${renderSearchOverlay()}
+        ${renderFilterModal()}
+      </div>
+    `;
+
+    bindEvents();
+    restoreSearchInputState(searchInputState);
+    restoreFilterInputState(filterInputState);
+    restoreScrollState(scrollState);
+    runPostRenderEffects();
+  }
+
+  function renderHomeHero() {
+    return `
+      <section class="hero-block">
+        <picture class="hero-bg-img">
+          <source media="(min-width: 768px)" srcset="${escapeAttribute(ASSETS.heroBg)}">
+          <img src="${escapeAttribute(ASSETS.heroBgMobile)}" alt="">
+        </picture>
+        <div class="hero-copy ${state.isSearchOpen ? "search-active" : ""}">
+          <h1>${escapeHtml(getUiText("app_title", "Namma Krishi Prices"))}</h1>
+          <p class="hero-subcopy">${escapeHtml(getUiText("home_intro", "Search for commodity, market, or variety prices."))}</p>
+          ${renderSearchField({ entryMode: "hero" })}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderSearchField({ autoFocus = false, canClose = false, entryMode = "overlay" } = {}) {
+    return `
+      <div class="search-field" data-search-root>
+        <span class="search-submit" aria-hidden="true">
+          <img class="search-icon" src="${escapeAttribute(ASSETS.search)}" alt="">
+        </span>
+        <input
+          type="text"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="${escapeAttribute(getUiText("search_placeholder", "Try Tomato, Mysuru, or Local"))}"
+          value="${escapeAttribute(state.query)}"
+          data-global-search="true"
+          data-search-entry="${escapeAttribute(entryMode)}"
+          ${autoFocus ? 'data-search-autofocus="true"' : ""}
+          aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}"
+        >
+        ${canClose ? `
+          <button type="button" class="search-close" data-close-search="true" aria-label="${escapeAttribute(getUiText("close_search_aria", "Close search"))}">
+            <img src="${escapeAttribute(ASSETS.close)}" alt="">
+          </button>
+        ` : ""}
+      </div>
+    `;
+  }
+
+  function renderSearchOverlay() {
+    if (!state.isSearchOpen) {
+      return "";
+    }
+
+    const panelClass = state.route.view === "home" ? "home-search" : "results-search";
+    const searchUiState = getSearchUiState();
+    return `
+      <div class="screen-overlay" data-close-search="true"></div>
+      <div class="floating-search-panel ${panelClass}" data-search-root role="dialog" aria-modal="true" aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}">
+        ${renderSearchField({ autoFocus: true, canClose: true, entryMode: "overlay" })}
+        <div class="search-suggestions-region ${searchUiState !== "hidden" ? "is-active" : ""} ${searchUiState === "ready" ? "is-scrollable" : ""}" data-search-suggestions>
+          ${renderSearchOverlayContent(searchUiState)}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSearchOverlayContent(searchUiState = getSearchUiState()) {
+    if (searchUiState === "ready") {
+      return renderSuggestions();
+    }
+    if (searchUiState === "loading") {
+      return renderSearchLoadingState();
+    }
+    if (searchUiState === "empty") {
+      return renderSearchEmptyState();
+    }
+    if (searchUiState === "unavailable") {
+      return renderSearchUnavailableState();
+    }
+    return renderSearchIdleState();
+  }
+
+  function renderSearchIdleState() {
+    return `
+      <div class="search-state-panel search-idle-panel" aria-live="polite">
+        <img class="empty-state-icon search-state-icon" src="${escapeAttribute(ASSETS.search)}" alt="">
+        <strong>${escapeHtml(getUiText("type_to_search", "Type to search"))}</strong>
+        <p>${escapeHtml(getUiText("search_idle_body", "Start typing to see matching suggestions."))}</p>
+      </div>
+    `;
+  }
+
+  function renderSearchLoadingState() {
+    return `
+      <div class="search-state-panel search-loading-panel" aria-live="polite">
+        <span class="search-state-spinner" aria-hidden="true"></span>
+        <strong>${escapeHtml(getUiText("search_loading_title", "Finding matching options..."))}</strong>
+        <p>${escapeHtml(getUiText("search_loading_body", "Suggestions will appear here."))}</p>
+      </div>
+    `;
+  }
+
+  function renderSearchEmptyState() {
+    return `
+      <div class="search-state-panel search-empty-panel" aria-live="polite">
+        <img class="empty-state-icon" src="${escapeAttribute(ASSETS.emptyState)}" alt="">
+        <strong>${escapeHtml(getUiText("no_matching_options", "No matching options."))}</strong>
+        <p>${escapeHtml(getUiText("search_no_results_body", "Try a different commodity, market, or variety name."))}</p>
+      </div>
+    `;
+  }
+
+  function renderSearchUnavailableState() {
+    return `
+      <div class="search-state-panel search-unavailable-panel" aria-live="polite">
+        <img class="empty-state-icon" src="${escapeAttribute(ASSETS.emptyState)}" alt="">
+        <strong>${escapeHtml(getUiText("search_unavailable_title", "Search is unavailable right now."))}</strong>
+        <p>${escapeHtml(getUiText("search_unavailable_body", "We could not load suggestions. Please try again."))}</p>
+        <button type="button" class="action-button ghost empty-state-button" data-retry-search-index="true">${escapeHtml(getUiText("retry", "Retry"))}</button>
+      </div>
+    `;
+  }
+
+  function renderCategorySection() {
+    if (!state.categoryGroups.length) {
+      return "";
+    }
+
+    const activeCategory = getActiveHomeCategory();
+    if (!activeCategory) {
+      return "";
+    }
+
+    return `
+      <section class="category-section" aria-label="${escapeAttribute(getUiText("category_title", "Quick pick your commodity below."))}">
+        <p class="section-copy">${escapeHtml(getUiText("category_title", "Quick pick your commodity below."))}</p>
+
+        <div class="category-tabs" role="tablist" aria-label="${escapeAttribute(getUiText("category_title", "Commodity categories"))}" data-home-category-rail="true">
+          ${state.categoryGroups.map((category) => {
+            const isActive = category.id === state.activeHomeCategoryId;
+            return `
+              <button
+                type="button"
+                class="category-tab ${isActive ? "active" : ""}"
+                data-home-category="${escapeAttribute(category.id)}"
+                role="tab"
+                aria-selected="${isActive ? "true" : "false"}"
+              >
+                <img src="${escapeAttribute(ASSETS.categoryThumb)}" alt="">
+                <span>${escapeHtml(getCategoryLabel(category.id, category.label))}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+
+        <section class="commodity-gallery">
+          <div class="section-heading">
+            <h2>${escapeHtml(getCategoryLabel(activeCategory.id, activeCategory.label))} (${escapeHtml(formatCountLabel(activeCategory.commodityCount, "commodity", "commodities"))})</h2>
+          </div>
+          <div class="commodity-grid" data-home-commodity-rail="true">
+            ${activeCategory.commodities.map((commodity) => `
+              <button
+                type="button"
+                class="commodity-tile"
+                data-home-commodity="${escapeAttribute(commodity)}"
+              >
+                <div class="thumb-wrap">
+                  <img src="${escapeAttribute(ASSETS.commodityThumb)}" alt="${escapeAttribute(translateEntity("commodity", commodity))}">
+                </div>
+                <p>${escapeHtml(translateEntity("commodity", commodity))}</p>
+              </button>
+            `).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderResultsLayoutToggle() {
+    return "";
+  }
+
+  function renderLocaleToggle() {
+    return `
+      <div class="locale-toggle language-toggle" role="group" aria-label="${escapeAttribute(getUiText("language_aria", "Language"))}">
+        <button type="button" class="locale-toggle-button language-option ${state.locale === "en" ? "is-active active" : ""}" data-locale-toggle="en">EN</button>
+        <button type="button" class="locale-toggle-button language-option ${state.locale === "kn" ? "is-active active" : ""}" data-locale-toggle="kn">${escapeHtml(getUiText("language_kannada", "Kannada").slice(0, 2).toUpperCase())}</button>
+      </div>
+    `;
+  }
+
+  function renderTopBar() {
+    if (state.route.view === "home") {
+      return `
+        <div class="topbar-left-slot">
+          ${renderLocaleToggle()}
+        </div>
+        <div class="brand-inline">
+          <img src="${escapeAttribute(ASSETS.logo)}" alt="">
+          <span>${escapeHtml(getUiText("app_title", "Namma Krishi Prices"))}</span>
+        </div>
+        ${state.showHomeTopbarSearch ? `
+          <button type="button" class="icon-button topbar-search-trigger" data-open-search="true" aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}">
+            <img src="${escapeAttribute(ASSETS.search)}" alt="">
+          </button>
+        ` : ""}
+      `;
+    }
+
+    return `
+      <button type="button" class="icon-button" id="backHome" aria-label="${escapeAttribute(getUiText("home_button", "Home"))}">
+        <img src="${escapeAttribute(ASSETS.back)}" alt="">
+      </button>
+      <div class="brand-inline">
+        <img src="${escapeAttribute(ASSETS.logo)}" alt="">
+        <span>${escapeHtml(getUiText("app_title", "Namma Krishi Prices"))}</span>
+      </div>
+      <div class="topbar-actions">
+        ${renderLocaleToggle()}
+        <button type="button" class="icon-button" data-open-search="true" aria-label="${escapeAttribute(getUiText("search_label", "Search commodities, markets, or varieties"))}">
+          <img src="${escapeAttribute(ASSETS.search)}" alt="">
+        </button>
+      </div>
+    `;
+  }
+
+  function renderSuggestions() {
+    return `
+      <div class="search-suggestions">
+        ${state.suggestions.map((result, index) => `
+          <button type="button" class="suggestion-row" data-suggestion-index="${index}">
+            <div class="thumb-wrap small ${result.type === "market" ? "suggestion-thumb-market" : ""}">
+              <img src="${escapeAttribute(result.type === "market" ? ASSETS.marketThumb : ASSETS.commodityThumb)}" alt="">
+            </div>
+            <div class="suggestion-copy">
+              <strong>${highlightMatch(getSuggestionLabel(result), state.query)}</strong>
+              <span class="suggestion-kind ${escapeAttribute(getSuggestionToneClass(result.type))}">
+                <img src="${escapeAttribute(getSuggestionIcon(result.type))}" alt="">
+                ${escapeHtml(getSuggestionTypeLabel(result.type))}
+              </span>
+            </div>
+          </button>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function getSuggestionIcon(type) {
+    if (type === "market") return ASSETS.suggestionMarket;
+    if (type === "variety") return ASSETS.suggestionVariety;
+    return ASSETS.suggestionCommodity;
+  }
+
+  function getSuggestionToneClass(type) {
+    if (type === "market") return "gold";
+    if (type === "variety") return "blue";
+    return "green";
+  }
+
+  function getFilterFieldToneClass(field) {
+    if (field === "market") return "gold";
+    if (field === "variety") return "blue";
+    return "green";
+  }
+
+  function renderResultsToolbar(rows) {
+    if (!state.context) {
+      return "";
+    }
+
+    const activeFilterCount = getActiveFilterCount();
+    return `
+      <section class="results-toolbar ${activeFilterCount > 0 ? "has-filter-summary" : ""}">
+        <div class="results-toolbar-inner">
+          <div class="commodity-title">
+            <div class="thumb-wrap large">
+              <img src="${escapeAttribute(getResultsToolbarThumb())}" alt="">
+            </div>
+            <div class="toolbar-support">
+              <h2>${escapeHtml(getResultsHeadingText())}</h2>
+              <p class="results-count-copy">
+                ${escapeHtml(getResultCountCopy(rows))}
+                ${activeFilterCount > 0 ? ` • ${escapeHtml(String(activeFilterCount))} ${escapeHtml(getUiText("filters_label", "Filters"))}` : ""}
+              </p>
+            </div>
+          </div>
+          ${renderFilterLauncher()}
+        </div>
+      </section>
+    `;
+  }
+
+  function getResultsToolbarThumb() {
+    return state.context && state.context.type === "market" ? ASSETS.marketThumb : ASSETS.commodityThumb;
+  }
+
+  function getResultsHeadingText() {
+    if (!state.context) {
+      return "";
+    }
+
+    if (state.context.type === "commodity") {
+      return translateEntity("commodity", state.route.commodity || state.context.heading);
+    }
+    if (state.context.type === "market") {
+      return translateEntity("market", state.route.market || state.context.heading);
+    }
+    if (state.context.type === "variety") {
+      return `${translateEntity("commodity", state.route.commodity)} / ${translateEntity("variety", state.route.variety)}`;
+    }
+    return state.context.heading || "";
+  }
+
+  function getResultCountCopy(rows) {
+    const count = Number(rows.length || 0).toLocaleString("en-IN");
+    return `${count} ${rows.length === 1 ? "result" : "results"}`;
+  }
+
+  function getActiveFilterCount() {
+    if (!state.context) {
+      return 0;
+    }
+
+    return state.context.filters.reduce((count, field) => count + (state.filters[field] || []).length, 0);
+  }
+
+  function renderFilterLauncher() {
+    if (!state.context || !state.context.filters.length) {
+      return "";
+    }
+
+    const activeFilterCount = getActiveFilterCount();
+    return `
+      <button type="button" class="filter-button" data-open-filter-modal="true" aria-label="${escapeAttribute(getUiText("filter_open_aria", "Open filters"))}">
+        <img src="${escapeAttribute(ASSETS.filter)}" alt="">
+        <span class="filter-button-label">${escapeHtml(getUiText("filters_label", "Filters"))}</span>
+        ${activeFilterCount > 0 ? `<span class="filter-count"><span class="filter-count-value">${activeFilterCount}</span></span>` : ""}
+      </button>
+    `;
+  }
+
+  function renderActiveFilterSummary() {
+    if (!state.context) {
+      return "";
+    }
+
+    const rows = state.context.filters
+      .map((field) => ({
+        field,
+        values: (state.filters[field] || []).slice(),
+      }))
+      .filter((entry) => entry.values.length);
+
+    if (!rows.length) {
+      return "";
+    }
+
+    return `
+      <section class="filter-summary">
+        <div class="filter-summary-inner active-filter-summary" aria-label="${escapeAttribute(getUiText("filters_label", "Filters"))}">
+          ${rows.map(({ field, values }) => `
+            <div class="filter-summary-row ${escapeAttribute(field)}-filter-summary">
+              <div class="filter-summary-label">
+                <img src="${escapeAttribute(getSuggestionIcon(field))}" alt="">
+                <span>${escapeHtml(getFieldLabel(field))}</span>
+              </div>
+              <div class="chip-row filter-summary-chip-row">
+                ${values.map((value) => `
+                  <span class="filter-chip filter-chip-active ${escapeAttribute(getFilterFieldToneClass(field))}">
+                    <span>${escapeHtml(translateEntity(field, value))}</span>
+                    <button type="button" class="filter-chip-remove chip-close" data-remove-active-filter="${field}" data-remove-active-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${getFieldLabel(field)} ${translateEntity(field, value)}`)}">&times;</button>
+                  </span>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderFilterModal() {
+    if (!state.context || !state.context.filters.length || !state.isFilterModalOpen) {
+      return "";
+    }
+
+    return `
+      <div class="screen-overlay filter-modal-backdrop" data-close-filter-modal="backdrop"></div>
+      <section class="filter-dialog" role="dialog" aria-modal="true" aria-label="${escapeAttribute(getUiText("filters_label", "Filters"))}">
+        <div class="dialog-header">
+          <div>
+            <h3>${escapeHtml(getUiText("refine_results", "Refine results"))}</h3>
+            <p class="filter-header-copy">${escapeHtml(getFilterModalHelperCopy())}</p>
+          </div>
+          <button type="button" class="icon-button close" data-close-filter-modal="button" aria-label="${escapeAttribute(getUiText("close_filters_aria", "Close filters"))}">
+            <img src="${escapeAttribute(ASSETS.close)}" alt="">
+          </button>
+        </div>
+        <div class="filter-dialog-body" data-preserve-scroll-id="filter-modal-body">
+          ${state.context.filters.map((field) => renderFilterField(field)).join("")}
+        </div>
+        <div class="action-row">
+          <button type="button" class="action-button ghost" data-clear-filter-drafts="true">${escapeHtml(getUiText("clear_filters", "Clear Filters"))}</button>
+          <button type="button" class="action-button solid" data-apply-filter-drafts="true">${escapeHtml(getUiText("apply_filters", "Apply Filters"))}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function getDraftSelectedFilterCount() {
+    if (!state.context) {
+      return 0;
+    }
+
+    return state.context.filters.reduce((count, field) => count + (state.filterDrafts[field] || []).length, 0);
+  }
+
+  function getFilterModalHelperCopy() {
+    const selectedCount = getDraftSelectedFilterCount();
+    if (selectedCount > 0) {
+      return `Ready to apply ${selectedCount} ${selectedCount === 1 ? "filter" : "filters"}.`;
+    }
+
+    return "Select one or more filters to narrow the results.";
+  }
+
+  function renderFilterField(field) {
+    const selected = state.filterDrafts[field] || [];
+    const options = getDraftFilterOptions(field, "");
+    const isOpen = state.activeFilterField === field;
+
+    return `
+      <div class="filter-group filter-modal-group">
+        <div class="filter-line">
+          <span class="filter-line-label ${escapeAttribute(getFilterFieldToneClass(field))}">${escapeHtml(getFieldLabel(field))}</span>
+          <span class="line"></span>
+        </div>
+        <div data-filter-chip-zone="${field}">
+          ${selected.length ? `
+            <div class="chip-row wrap filter-chip-row">
+              ${selected.map((value) => `
+                <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
+                  <span>${escapeHtml(translateEntity(field, value))}</span>
+                  <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
+                </span>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
+        <button
+          type="button"
+          class="filter-trigger filter-dropdown-trigger"
+          data-filter-toggle="${field}"
+          aria-expanded="${isOpen ? "true" : "false"}"
+        >
+          <span>${escapeHtml(getUiText("tap_to_select", "Tap to Select"))}</span>
+          <span class="filter-chevron ${isOpen ? "expanded" : ""}" aria-hidden="true"></span>
+        </button>
+        <div class="option-list filter-search-results ${isOpen ? "is-open" : ""}" data-preserve-scroll-id="filter-search-results" data-filter-results="${field}" data-filter-field="${field}">
+          ${isOpen ? (options.length ? options.map((value) => `
+            <button
+              type="button"
+              class="option-row filter-search-option ${selected.includes(value) ? "selected is-selected" : ""}"
+              data-toggle-draft-filter="${field}"
+              data-toggle-draft-value="${escapeAttribute(value)}"
+            >
+              <span>${escapeHtml(translateEntity(field, value))}</span>
+              <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check">✓</span>' : ""}</span>
+            </button>
+          `).join("") : `<p class="filter-empty">${escapeHtml(getUiText("no_matching_options", "No matching options."))}</p>`) : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderResults(rows) {
+    if (!state.context) {
+      return `
+        <div class="empty-state">
+          <img class="empty-state-icon" src="${escapeAttribute(ASSETS.emptyState)}" alt="">
+          <h3>${escapeHtml(getUiText("loading_rows", "Loading rows..."))}</h3>
+        </div>
+      `;
+    }
+
+    if (!rows.length) {
+      return `
+        <div class="empty-state">
+          <img class="empty-state-icon" src="${escapeAttribute(ASSETS.emptyState)}" alt="">
+          <h3>${escapeHtml(getUiText("filters_label", "Filters"))}</h3>
+          <p>${escapeHtml(getUiText("no_rows_match", "No rows match the current combination."))}</p>
+        </div>
+      `;
+    }
+
+    if (getActiveResultsLayout() === "table") {
+      return renderResultsTable(rows);
+    }
+
+    return renderResultsCards(rows);
+  }
+
+  function renderResultsCards(rows) {
+    return `
+      <div class="results-list">
+        ${rows.map((row) => renderResultCard(row)).join("")}
+      </div>
+    `;
+  }
+
+  function renderResultCard(row) {
+    const isExpanded = row.rowKey === state.expandedRowKey;
+    const historyRows = isExpanded ? getHistoryRows(row) : [];
+    const presentation = getCardPresentation(row);
+    const previousRow = getPreviousComparableRow(row);
+    const priceColumns = getRowPriceProfile(row).columns;
+    const freshnessMeta = getFreshnessMeta(row.reportDate);
+    const detailEntries = buildCardDetailEntries(row, previousRow, presentation);
+
+    return `
+      <article class="price-card result-card ${isExpanded ? "expanded is-expanded" : ""}" data-row-key="${escapeAttribute(row.rowKey)}">
+        <div class="card-header">
+          <div class="card-market">
+            <img src="${escapeAttribute(ASSETS.marketThumb)}" alt="">
+            <h3>${escapeHtml(presentation.titleValue)}</h3>
+          </div>
+        </div>
+
+        <div class="card-status-row">
+          <span class="card-source-label">${escapeHtml(`${getUiText("source_prefix", "Source")}: ${formatSourceName(row.sourceId)}`)}</span>
+          <span class="status-pill status-pill-${escapeAttribute(freshnessMeta.tone)}">${escapeHtml(freshnessMeta.label)}</span>
+        </div>
+
+        <div class="stats-row" style="--stat-columns:${Math.min(priceColumns.length, 3)}">
+          ${priceColumns.map((column) => `
+            <div class="stat-block">
+              <div class="stat-label">${escapeHtml(getPriceLabelForCard(column.kind))}</div>
+              <div class="stat-value ${escapeAttribute(getStatTone(column.kind))}">${escapeHtml(formatCurrencyDisplay(row[column.key]))}</div>
+              ${renderCardDelta(getPreviousPriceDelta(row, column.key, previousRow))}
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="detail-grid">
+          ${detailEntries.map((entry) => `
+            <div class="meta-item">
+              <div class="meta-label">${escapeHtml(entry.label)}</div>
+              <div class="meta-value">${escapeHtml(entry.value)}${entry.subvalue ? `<span class="meta-subvalue"> ${escapeHtml(entry.subvalue)}</span>` : ""}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        ${isExpanded ? `
+          <div class="graph-panel result-card-history">
+            ${renderHistory(row, historyRows)}
+          </div>
+        ` : ""}
+
+        <button type="button" class="history-cta result-card-toggle" data-toggle-history="${escapeAttribute(row.rowKey)}" aria-expanded="${isExpanded ? "true" : "false"}">
+          <span class="result-card-toggle-label">${escapeHtml(getUiText("see_price_history", "See Price History"))}</span>
+          <span class="caret result-card-toggle-chevron"></span>
+        </button>
+      </article>
+    `;
+  }
+
+  function getPriceLabelForCard(kind) {
+    if (kind === "max") return getUiText("max_price_rs", "Maximum price (Rs.)");
+    if (kind === "min") return getUiText("min_price_rs", "Minimum price (Rs.)");
+    if (kind === "modal") return getUiText("modal_price_rs", "Modal price (Rs.)");
+    return getUiText("max_price_rs", "Price (Rs.)");
+  }
+
+  function getStatTone(kind) {
+    if (kind === "min") return "blue";
+    if (kind === "modal") return "gold";
+    return "red";
+  }
+
+  function formatCurrencyDisplay(value) {
+    if (value === null || value === undefined || value === "") {
+      return "-";
+    }
+    return `₹${formatCurrency(value)}`;
+  }
+
+  function renderCardDelta(delta) {
+    if (delta === null) {
+      return `<div class="stat-delta flat"><span>-</span></div>`;
+    }
+
+    if (delta === 0) {
+      return `<div class="stat-delta up"><span>₹ 0</span></div>`;
+    }
+
+    const isGain = delta > 0;
+    return `
+      <div class="stat-delta ${isGain ? "up" : "down"}">
+        <span>₹ ${isGain ? "+" : "-"}${formatCurrency(Math.abs(delta))}</span>
+        <span class="delta-icon">${isGain ? "▲" : "▼"}</span>
+      </div>
+    `;
+  }
+
+  function buildCardDetailEntries(row, previousRow, presentation) {
+    const meta = presentation.meta.slice();
+    const details = [
+      ...meta,
+      hasArrivalsData(row)
+        ? { label: getUiText("arrivals_and_units", "Arrivals And Units"), value: formatNumber(row.arrivals), subvalue: row.unit }
+        : null,
+      { label: getUiText("latest_update", "Latest Update"), value: formatDateFull(row.reportDate) || "-" },
+      { label: getUiText("previous_update", "Previous Update"), value: previousRow ? formatDateFull(previousRow.reportDate) : "-" },
+    ].filter(Boolean);
+
+    return details.slice(0, 5);
+  }
+
+  function formatSourceName(sourceId) {
+    const raw = String(sourceId || "krama").replaceAll("_", " ").trim();
+    if (!raw) {
+      return "Krama";
+    }
+    return raw.split(" ").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+  }
+
+  function getFreshnessMeta(reportDate) {
+    const now = new Date("2026-07-17T00:00:00");
+    const then = new Date(`${normalizeReportDateValue(reportDate)}T00:00:00`);
+    const diffDays = Number.isNaN(then.getTime()) ? 999 : Math.max(0, Math.floor((now.getTime() - then.getTime()) / 86400000));
+
+    if (diffDays <= 2) {
+      return { tone: "fresh", label: "Recently updated" };
+    }
+    if (diffDays <= 7) {
+      return { tone: "aging", label: "Updated this week" };
+    }
+    return { tone: "stale", label: "Older update" };
+  }
+
+  function renderPriceDelta(delta) {
+    if (delta === null) {
+      return `<span class="price-delta price-delta-flat">${escapeHtml(getUiText("no_earlier_update", "No earlier update"))}</span>`;
+    }
+
+    if (delta === 0) {
+      return `<span class="price-delta price-delta-flat"><span>₹ 0</span></span>`;
+    }
+
+    const isGain = delta > 0;
+    return `
+      <span class="price-delta ${isGain ? "price-delta-gain" : "price-delta-loss"}">
+        <span>₹ ${isGain ? "+" : "-"}${formatCurrency(Math.abs(delta))}</span>
+        ${renderDeltaIcon(isGain)}
+      </span>
+    `;
   }
 })();

@@ -177,6 +177,34 @@
       "en": "No matching options.",
       "kn": "ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ಆಯ್ಕೆಗಳಿಲ್ಲ."
     },
+    "search_idle_body": {
+      "en": "Start typing to see matching suggestions.",
+      "kn": "Start typing to see matching suggestions."
+    },
+    "search_no_results_body": {
+      "en": "Try a different commodity, market, or variety name.",
+      "kn": "Try a different commodity, market, or variety name."
+    },
+    "search_loading_title": {
+      "en": "Finding matching options...",
+      "kn": "Finding matching options..."
+    },
+    "search_loading_body": {
+      "en": "Suggestions will appear here.",
+      "kn": "Suggestions will appear here."
+    },
+    "search_unavailable_title": {
+      "en": "Search is unavailable right now.",
+      "kn": "Search is unavailable right now."
+    },
+    "search_unavailable_body": {
+      "en": "We could not load suggestions. Please try again.",
+      "kn": "We could not load suggestions. Please try again."
+    },
+    "retry": {
+      "en": "Retry",
+      "kn": "Retry"
+    },
     "loading_rows": {
       "en": "Loading rows...",
       "kn": "ಸಾಲನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
