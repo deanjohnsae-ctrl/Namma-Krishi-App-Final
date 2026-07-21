@@ -93,12 +93,62 @@
     heroBg: "./assets/hero-bg.png",
     heroBgMobile: "./assets/hero-bg-mobile.png",
     commodityThumb: "./assets/commodity-thumb.png",
+    appleThumb: "./assets/apple-thumb-real.png",
+    bananaThumb: "./assets/banana-thumb-real.png",
+    categoryFruitsBadge: "./assets/category-fruits-badge.png",
+    categoryVegetablesBadge: "./assets/category-vegetables-badge.png",
+    categoryNutsSeedsBadge: "./assets/category-nuts-seeds-badge.png",
+    categoryGrainsPulsesBadge: "./assets/category-grains-pulses-badge.png",
+    categoryMiscBadge: "./assets/category-misc-badge.png",
+    chikoosSapotaThumb: "./assets/chikoos-sapota-thumb-real.png",
+    grapesThumb: "./assets/grapes-thumb-real.png",
+    guavaThumb: "./assets/guava-thumb-real.png",
+    jackFruitThumb: "./assets/jack-fruit-thumb-real.png",
+    karbujaThumb: "./assets/karbuja-thumb-real.png",
+    limeLemonThumb: "./assets/lime-lemon-thumb-real.png",
+    mangoThumb: "./assets/mango-thumb-real.png",
+    mangoRawRipeThumb: "./assets/mango-raw-ripe-thumb-real.png",
     marketThumb: "./assets/market-thumb.png",
+    mousambiThumb: "./assets/mousambi-thumb-real.png",
+    orangeThumb: "./assets/orange-thumb-real.png",
+    papayaThumb: "./assets/papaya-thumb-real.png",
+    pineAppleThumb: "./assets/pine-apple-thumb-real.png",
+    pomagranateThumb: "./assets/pomagranate-thumb-real.png",
+    tamarindFruitThumb: "./assets/tamarind-fruit-thumb-real.png",
+    waterMelonThumb: "./assets/water-melon-thumb-real.png",
     categoryThumb: "./assets/category.png",
     emptyState: "./assets/empty-state.svg",
     suggestionCommodity: "./assets/suggestion-commodity.svg",
-    suggestionMarket: "./assets/suggestion-market.svg",
+    suggestionMarket: "./assets/suggestion-market.svg?v=2",
     suggestionVariety: "./assets/suggestion-variety.svg",
+  };
+
+  const CATEGORY_TAB_THUMBS = {
+    fruits: ASSETS.categoryFruitsBadge,
+    vegetables: ASSETS.categoryVegetablesBadge,
+    nuts_and_seeds: ASSETS.categoryNutsSeedsBadge,
+    grains_and_pulses: ASSETS.categoryGrainsPulsesBadge,
+    miscellaneous: ASSETS.categoryMiscBadge,
+  };
+
+  const FRUIT_COMMODITY_THUMBS = {
+    Apple: ASSETS.appleThumb,
+    Banana: ASSETS.bananaThumb,
+    "Chikoos (Sapota)": ASSETS.chikoosSapotaThumb,
+    Grapes: ASSETS.grapesThumb,
+    Guava: ASSETS.guavaThumb,
+    "Jack Fruit": ASSETS.jackFruitThumb,
+    Karbuja: ASSETS.karbujaThumb,
+    "Lime (Lemon)": ASSETS.limeLemonThumb,
+    Mango: ASSETS.mangoThumb,
+    "Mango (Raw-Ripe)": ASSETS.mangoRawRipeThumb,
+    Mousambi: ASSETS.mousambiThumb,
+    Orange: ASSETS.orangeThumb,
+    Papaya: ASSETS.papayaThumb,
+    "Pine Apple": ASSETS.pineAppleThumb,
+    Pomagranate: ASSETS.pomagranateThumb,
+    "Tamarind Fruit": ASSETS.tamarindFruitThumb,
+    "Water Melon": ASSETS.waterMelonThumb,
   };
 
   const state = {
@@ -1581,8 +1631,24 @@
     return CATEGORY_ICONS[categoryId] || "🧺";
   }
 
+  function getCategoryThumb(categoryId) {
+    return CATEGORY_TAB_THUMBS[categoryId] || ASSETS.categoryThumb;
+  }
+
   function getCommodityIcon(commodity, categoryId) {
     return COMMODITY_ICONS[commodity] || getCategoryIcon(categoryId);
+  }
+
+  function hasBakedCommodityThumb(commodity) {
+    return Boolean(FRUIT_COMMODITY_THUMBS[commodity]);
+  }
+
+  function getCommodityThumb(commodity) {
+    return FRUIT_COMMODITY_THUMBS[commodity] || ASSETS.commodityThumb;
+  }
+
+  function getCommodityThumbWrapClass(commodity) {
+    return hasBakedCommodityThumb(commodity) ? "thumb-wrap-baked" : "";
   }
 
   function formatCountLabel(count, singular, plural) {
@@ -1974,6 +2040,7 @@
 
     if (type === "market") {
       return {
+        titleKind: "commodity",
         titleLabel: getUiText("field_commodity", "Commodity"),
         titleValue: translateEntity("commodity", row.commodity),
         meta: buildMetaEntries([
@@ -1985,6 +2052,7 @@
 
     if (type === "commodity") {
       return {
+        titleKind: "market",
         titleLabel: getUiText("field_market", "Market"),
         titleValue: translateEntity("market", row.market),
         meta: buildMetaEntries([
@@ -1996,6 +2064,7 @@
 
     if (type === "variety") {
       return {
+        titleKind: "market",
         titleLabel: getUiText("field_market", "Market"),
         titleValue: translateEntity("market", row.market),
         meta: buildMetaEntries([
@@ -2006,6 +2075,7 @@
     }
 
     return {
+      titleKind: "market",
       titleLabel: getUiText("field_market", "Market"),
       titleValue: translateEntity("market", row.market),
       meta: buildMetaEntries([
@@ -3858,7 +3928,7 @@
                 role="tab"
                 aria-selected="${isActive ? "true" : "false"}"
               >
-                <img src="${escapeAttribute(ASSETS.categoryThumb)}" alt="">
+                <img src="${escapeAttribute(getCategoryThumb(category.id))}" alt="">
                 <span>${escapeHtml(getCategoryLabel(category.id, category.label))}</span>
               </button>
             `;
@@ -3876,8 +3946,8 @@
                 class="commodity-tile"
                 data-home-commodity="${escapeAttribute(commodity)}"
               >
-                <div class="thumb-wrap">
-                  <img src="${escapeAttribute(ASSETS.commodityThumb)}" alt="${escapeAttribute(translateEntity("commodity", commodity))}">
+                <div class="thumb-wrap ${escapeAttribute(getCommodityThumbWrapClass(commodity))}">
+                  <img src="${escapeAttribute(getCommodityThumb(commodity))}" alt="${escapeAttribute(translateEntity("commodity", commodity))}">
                 </div>
                 <p>${escapeHtml(translateEntity("commodity", commodity))}</p>
               </button>
@@ -3941,14 +4011,14 @@
       <div class="search-suggestions">
         ${state.suggestions.map((result, index) => `
           <button type="button" class="suggestion-row" data-suggestion-index="${index}">
-            <div class="thumb-wrap small ${result.type === "market" ? "suggestion-thumb-market" : ""}">
-              <img src="${escapeAttribute(result.type === "market" ? ASSETS.marketThumb : ASSETS.commodityThumb)}" alt="">
+            <div class="thumb-wrap small ${escapeAttribute(result.type === "market" ? "suggestion-thumb-market" : getCommodityThumbWrapClass(result.commodity))}">
+              <img src="${escapeAttribute(result.type === "market" ? ASSETS.marketThumb : getCommodityThumb(result.commodity))}" alt="">
             </div>
             <div class="suggestion-copy">
               <strong>${highlightMatch(getSuggestionLabel(result), state.query)}</strong>
               <span class="suggestion-kind ${escapeAttribute(getSuggestionToneClass(result.type))}">
                 <img src="${escapeAttribute(getSuggestionIcon(result.type))}" alt="">
-                ${escapeHtml(getSuggestionTypeLabel(result.type))}
+                ${escapeHtml(getSuggestionKindLabel(result))}
               </span>
             </div>
           </button>
@@ -3961,6 +4031,13 @@
     if (type === "market") return ASSETS.suggestionMarket;
     if (type === "variety") return ASSETS.suggestionVariety;
     return ASSETS.suggestionCommodity;
+  }
+
+  function getSuggestionKindLabel(result) {
+    if (result.type === "variety") {
+      return translateEntity("commodity", result.commodity);
+    }
+    return getSuggestionTypeLabel(result.type);
   }
 
   function getSuggestionToneClass(type) {
@@ -3985,8 +4062,8 @@
       <section class="results-toolbar ${activeFilterCount > 0 ? "has-filter-summary" : ""}">
         <div class="results-toolbar-inner">
           <div class="commodity-title">
-            <div class="thumb-wrap large">
-              <img src="${escapeAttribute(getResultsToolbarThumb())}" alt="">
+            <div class="thumb-wrap large results-context-icon-${escapeAttribute(state.context.type)} ${escapeAttribute(state.context.type === "market" ? "" : getCommodityThumbWrapClass(state.route.commodity))}">
+              <img src="${escapeAttribute(getResultsToolbarIcon())}" alt="">
             </div>
             <div class="toolbar-support">
               <h2>${escapeHtml(getResultsHeadingText())}</h2>
@@ -4002,8 +4079,11 @@
     `;
   }
 
-  function getResultsToolbarThumb() {
-    return state.context && state.context.type === "market" ? ASSETS.marketThumb : ASSETS.commodityThumb;
+  function getResultsToolbarIcon() {
+    if (state.context && state.context.type === "market") {
+      return ASSETS.suggestionMarket;
+    }
+    return getCommodityThumb(state.route.commodity);
   }
 
   function getResultsHeadingText() {
@@ -4233,7 +4313,7 @@
       <article class="price-card result-card ${isExpanded ? "expanded is-expanded" : ""}" data-row-key="${escapeAttribute(row.rowKey)}">
         <div class="card-header">
           <div class="card-market">
-            <img src="${escapeAttribute(ASSETS.marketThumb)}" alt="">
+            <img class="card-title-icon card-title-icon-${escapeAttribute(presentation.titleKind)}" src="${escapeAttribute(getCardTitleIcon(presentation.titleKind, row.commodity))}" alt="">
             <h3>${escapeHtml(presentation.titleValue)}</h3>
           </div>
         </div>
@@ -4274,6 +4354,16 @@
         </button>
       </article>
     `;
+  }
+
+  function getCardTitleIcon(titleKind, commodity) {
+    if (titleKind === "market") {
+      return ASSETS.suggestionMarket;
+    }
+    if (titleKind === "variety") {
+      return ASSETS.suggestionVariety;
+    }
+    return getCommodityThumb(commodity);
   }
 
   function getPriceLabelForCard(kind) {

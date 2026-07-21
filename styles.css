@@ -2167,28 +2167,28 @@ select {
 
 /* Prototype integration overrides */
 :root {
-  --brand-red: #b82831;
-  --brand-red-hover: #9f2029;
-  --cream: #fdf0c4;
-  --surface: #f5f5f5;
+  --brand-red: #24523a;
+  --brand-red-hover: #193b2a;
+  --cream: #f3f6ef;
+  --surface: #eef2ec;
   --panel: #ffffff;
-  --soft-pink: #ffe5e7;
-  --line: #e0e0e0;
-  --gold: #ca8a04;
+  --soft-pink: #f4e3d9;
+  --line: #d8e0d5;
+  --gold: #c99a45;
   --blue: #1e3a8a;
-  --green: #2e7d4f;
-  --green-hover: #276b44;
-  --green-active: #215c3a;
-  --green-rgb: 46, 125, 79;
-  --muted: #757575;
+  --green: #3f7d4a;
+  --green-hover: #32663b;
+  --green-active: #285331;
+  --green-rgb: 63, 125, 74;
+  --muted: #667064;
   --pill-radius: 999px;
   --card-radius: 12px;
 }
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #f4f4f4 0%, #e8e8e8 100%);
-  color: #212121;
+  background: linear-gradient(180deg, #faf8f1 0%, #eef2ec 100%);
+  color: #263329;
 }
 
 .shell,
@@ -2550,7 +2550,7 @@ body {
 }
 
 .suggestion-row:hover {
-  background: #f5faf3;
+  background: #f1f6ef;
 }
 
 .thumb-wrap {
@@ -2558,6 +2558,7 @@ body {
   aspect-ratio: 1 / 1;
   background: var(--soft-pink);
   border-radius: 8px;
+  overflow: hidden;
   padding: 4px;
 }
 
@@ -2565,6 +2566,11 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.thumb-wrap-baked {
+  background: transparent;
+  padding: 0;
 }
 
 .thumb-wrap.large {
@@ -2578,6 +2584,11 @@ body {
   height: 48px;
   flex: 0 0 48px;
   aspect-ratio: auto;
+}
+
+.results-context-icon-market,
+.results-context-icon-variety {
+  background: #fff;
 }
 
 .suggestion-thumb-market {
@@ -2754,7 +2765,9 @@ body {
 .category-tab img {
   width: 32px;
   height: 32px;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(1, 45, 29, 0.08);
 }
 
 .commodity-gallery {
@@ -3010,6 +3023,18 @@ body {
   border-radius: 6px;
 }
 
+.card-title-icon-market,
+.card-title-icon-variety {
+  background: #fff;
+  padding: 8px;
+  object-fit: contain;
+}
+
+.card-market img.card-title-icon-market {
+  width: 48px;
+  height: 48px;
+}
+
 .card-market h3 {
   margin: 0;
   font-size: 20px;
@@ -3044,18 +3069,18 @@ body {
 }
 
 .status-pill-fresh {
-  background: #e7f5ec;
+  background: #e5f0e5;
   color: var(--green);
 }
 
 .status-pill-aging {
-  background: #fff7e0;
-  color: #aa7300;
+  background: #f7efdc;
+  color: #9a702b;
 }
 
 .status-pill-stale {
-  background: #fde7e9;
-  color: var(--brand-red);
+  background: #f5e4de;
+  color: #a5523f;
 }
 
 .stats-row {
