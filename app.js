@@ -1871,7 +1871,12 @@
 
   function renderResults(rows) {
     if (!state.context) {
-      return `<div class="empty-state">${escapeHtml(getUiText("loading_rows", "Loading rows..."))}</div>`;
+      return `
+        <div class="empty-state empty-state-loading" aria-live="polite">
+          <span class="search-state-spinner empty-state-spinner" aria-hidden="true"></span>
+          <h3>${escapeHtml(getUiText("loading", "Loading..."))}</h3>
+        </div>
+      `;
     }
 
     if (!rows.length) {
@@ -2288,16 +2293,19 @@
       return `<p class="muted">${escapeHtml(getUiText("no_historical_points", "No historical points are available inside the required time window."))}</p>`;
     }
 
+    const isMobileViewport = window.innerWidth <= 767;
     const priceMode = getRowPriceMode(rows[0]);
     const chartMetricKeys = getChartMetricKeys(rows[0]);
     const canonicalKey = getCanonicalPriceKey(rows[0]);
     const axisWidth = 48;
     const chartRows = rows.map((row) => ({ ...row, isBaseline: false }));
-    const width = Math.max(600, 120 + (chartRows.length - 1) * 96);
-    const height = 250;
-    const paddingX = 42;
+    const width = isMobileViewport
+      ? Math.max(460, 108 + (chartRows.length - 1) * 76)
+      : Math.max(600, 120 + (chartRows.length - 1) * 96);
+    const height = isMobileViewport ? 220 : 250;
+    const paddingX = isMobileViewport ? 34 : 42;
     const paddingTop = 16;
-    const paddingBottom = 34;
+    const paddingBottom = isMobileViewport ? 30 : 34;
     const values = chartRows.flatMap((entry) => {
       return chartMetricKeys
         .map((metric) => entry[metric.key])
@@ -2395,13 +2403,29 @@
         <div class="chart-summary-metrics">
           ${profile.columns.map((column) => `
             <span class="chart-metric chart-metric-${escapeAttribute(column.kind)} chart-metric-slot-${escapeAttribute(column.kind)}">
-              <span class="chart-metric-label"><span class="chart-metric-line chart-metric-line-${escapeAttribute(column.kind)}"></span>${escapeHtml(column.label)}</span>
+              <span class="chart-metric-label" title="${escapeAttribute(column.label)}"><span class="chart-metric-line chart-metric-line-${escapeAttribute(column.kind)}"></span><span class="chart-metric-label-text">${escapeHtml(getChartSummaryMetricLabel(column, profile.mode))}</span></span>
               <span class="chart-metric-value">${formatCurrency(activePoint[column.key])}</span>
             </span>
           `).join("")}
         </div>
       </div>
     `;
+  }
+
+  function getChartSummaryMetricLabel(column, profileMode) {
+    if (profileMode === "single") {
+      return column.label;
+    }
+
+    if (column.kind === "max") {
+      return getUiText("max_short", "Max");
+    }
+
+    if (column.kind === "min") {
+      return getUiText("min_short", "Min");
+    }
+
+    return getUiText("modal_short", "Modal");
   }
 
   function renderChartPointCircle(x, y, color, isActive) {
@@ -3135,9 +3159,8 @@
       chartSummary.dataset.chartSummaryLayout = layoutMode;
 
       if (layoutMode === "mobile") {
-        const mobileWidth = Math.min(availableWidth, Math.max(220, availableWidth - 12));
-        summaryShell.style.width = `${mobileWidth}px`;
-        summaryShell.style.maxWidth = `${mobileWidth}px`;
+        summaryShell.style.removeProperty("width");
+        summaryShell.style.removeProperty("max-width");
       } else {
         summaryShell.style.removeProperty("width");
         summaryShell.style.removeProperty("max-width");
@@ -4007,13 +4030,13 @@
       <div class="search-suggestions">
         ${state.suggestions.map((result, index) => `
           <button type="button" class="suggestion-row" data-suggestion-index="${index}">
-            <div class="thumb-wrap small ${escapeAttribute(result.type === "market" ? "suggestion-thumb-market" : getCommodityThumbWrapClass(result.commodity))}">
-              <img src="${escapeAttribute(result.type === "market" ? ASSETS.marketThumb : getCommodityThumb(result.commodity))}" alt="">
+            <div class="thumb-wrap small ${escapeAttribute(result.type === "market" ? "results-context-icon-market" : getCommodityThumbWrapClass(result.commodity))}">
+              <img src="${escapeAttribute(result.type === "market" ? ASSETS.suggestionMarket : getCommodityThumb(result.commodity))}" alt="">
             </div>
             <div class="suggestion-copy">
               <strong>${highlightMatch(getSuggestionLabel(result), state.query)}</strong>
               <span class="suggestion-kind ${escapeAttribute(getSuggestionToneClass(result.type))}">
-                <img src="${escapeAttribute(getSuggestionIcon(result.type))}" alt="">
+                ${result.type === "market" ? "" : `<img src="${escapeAttribute(getSuggestionIcon(result.type))}" alt="">`}
                 ${escapeHtml(getSuggestionKindLabel(result))}
               </span>
             </div>
@@ -4179,7 +4202,6 @@
         <div class="dialog-header">
           <div>
             <h3>${escapeHtml(getUiText("refine_results", "Refine results"))}</h3>
-            <p class="filter-header-copy">${escapeHtml(getFilterModalHelperCopy())}</p>
           </div>
           <button type="button" class="icon-button close" data-close-filter-modal="button" aria-label="${escapeAttribute(getUiText("close_filters_aria", "Close filters"))}">
             <img src="${escapeAttribute(ASSETS.close)}" alt="">
@@ -4194,25 +4216,6 @@
         </div>
       </section>
     `;
-  }
-
-  function getDraftSelectedFilterCount() {
-    if (!state.context) {
-      return 0;
-    }
-
-    return state.context.filters.reduce((count, field) => count + (state.filterDrafts[field] || []).length, 0);
-  }
-
-  function getFilterModalHelperCopy() {
-    const selectedCount = getDraftSelectedFilterCount();
-    if (selectedCount > 0) {
-      const key = selectedCount === 1 ? "filter_helper_ready_one" : "filter_helper_ready_many";
-      return getUiText(key, `Ready to apply ${selectedCount} ${selectedCount === 1 ? "filter" : "filters"}.`)
-        .replace("{count}", String(selectedCount));
-    }
-
-    return getUiText("filter_helper_empty", "Select one or more filters to narrow the results.");
   }
 
   function renderFilterField(field) {
@@ -4270,9 +4273,9 @@
   function renderResults(rows) {
     if (!state.context) {
       return `
-        <div class="empty-state">
-          <img class="empty-state-icon" src="${escapeAttribute(ASSETS.emptyState)}" alt="">
-          <h3>${escapeHtml(getUiText("loading_rows", "Loading rows..."))}</h3>
+        <div class="empty-state empty-state-loading" aria-live="polite">
+          <span class="search-state-spinner empty-state-spinner" aria-hidden="true"></span>
+          <h3>${escapeHtml(getUiText("loading", "Loading..."))}</h3>
         </div>
       `;
     }

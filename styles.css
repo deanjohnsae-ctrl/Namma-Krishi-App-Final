@@ -16,10 +16,10 @@
   --shadow: 0 18px 44px rgba(22, 26, 50, 0.08);
   --gain: #14804a;
   --loss: #c2410c;
-  --modal: #cc9900;
+  --modal: #9A7041;
   --price-max: #1e3a8a;
   --price-min: #c2410c;
-  --price-modal: #cc9900;
+  --price-modal: #9A7041;
   --tag-commodity-bg: #d9eee1;
   --tag-commodity-text: #0f5132;
   --tag-commodity-border: rgba(15, 81, 50, 0.16);
@@ -27,8 +27,8 @@
   --tag-market-text: #1e3a8a;
   --tag-market-border: rgba(30, 58, 138, 0.18);
   --tag-variety-bg: #fdf0d5;
-  --tag-variety-text: #cc9900;
-  --tag-variety-border: rgba(204, 153, 0, 0.18);
+  --tag-variety-text: #9A7041;
+  --tag-variety-border: rgba(154, 112, 65, 0.18);
 }
 
 @font-face {
@@ -838,7 +838,7 @@ select {
 }
 
 .filter-chip-active.gold:hover {
-  background: rgba(204, 153, 0, 0.14);
+  background: rgba(154, 112, 65, 0.14);
 }
 
 .filter-chip-active.blue:hover {
@@ -1345,6 +1345,7 @@ select {
   font-size: 12px;
   text-align: center;
   letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
 .chart-layout {
@@ -1503,7 +1504,7 @@ select {
 }
 
 .chart-metric-modal {
-  background: rgba(204, 153, 0, 0.12);
+  background: rgba(154, 112, 65, 0.12);
   color: var(--price-modal);
 }
 
@@ -1523,6 +1524,7 @@ select {
 .axis-note {
   color: var(--muted);
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .history-layout[data-chart-summary-layout="compact"] {
@@ -1953,7 +1955,7 @@ select {
 
   .chart-scroll-note {
     font-size: 11px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .chart-layout {
@@ -1995,7 +1997,7 @@ select {
       "summary"
       "chart"
       "note";
-    gap: 8px;
+    gap: 12px;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-summary-shell {
@@ -2011,53 +2013,84 @@ select {
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-summary {
-    gap: 8px;
-    padding: 10px 12px;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-summary-date {
-    gap: 8px;
-    align-items: center;
+    gap: 10px;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-summary-date-label {
     font-size: 12px;
   }
 
-  .history-layout[data-chart-summary-layout="mobile"] .chart-summary-date-value {
-    font-size: 15px;
-  }
+.history-layout[data-chart-summary-layout="mobile"] .chart-summary-date-value {
+  font-size: 15px;
+  margin-left: 0;
+}
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-summary-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-metric {
-    gap: 3px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: stretch;
+    gap: 12px;
     min-width: 0;
-    padding: 8px 6px;
-    border-radius: 16px;
+    padding: 10px 12px;
+    border-radius: 14px;
     width: 100%;
+    text-align: left;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-metric-label {
-    gap: 4px;
-    font-size: 10px;
+    gap: 6px;
+    justify-content: flex-start;
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-metric-line {
-    width: 14px;
+    width: 16px;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-metric-value {
-    font-size: 15px;
+    font-size: 20px;
+    justify-self: end;
   }
 
   .history-layout[data-chart-summary-layout="mobile"] .chart-metric-slot-modal {
     grid-column: auto;
     justify-self: stretch;
     width: 100%;
+  }
+
+  .history-layout[data-chart-summary-layout="mobile"] .chart-summary-shell {
+    position: static;
+    left: auto;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .history-layout[data-chart-summary-layout="mobile"] .history-chart-panel {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .history-layout[data-chart-summary-layout="mobile"] .axis-note {
+    font-size: 12px;
+    padding-inline: 2px;
   }
 
   .filter-fab {
@@ -2147,7 +2180,7 @@ select {
   --panel: #ffffff;
   --soft-pink: #f4e3d9;
   --line: #d8e0d5;
-  --gold: #cc9900;
+  --gold: #9A7041;
   --blue: #1e3a8a;
   --green: #3f7d4a;
   --green-hover: #32663b;
@@ -2635,6 +2668,7 @@ body {
 .thumb-wrap.large {
   width: 53px;
   height: 53px;
+  flex: 0 0 53px;
   aspect-ratio: auto;
 }
 
@@ -2712,7 +2746,7 @@ body {
 
 .search-suggestions .suggestion-kind.gold,
 .filter-line-label.gold {
-  color: var(--price-modal);
+  color: var(--gold);
 }
 
 .search-suggestions .suggestion-kind.blue,
@@ -2753,6 +2787,7 @@ body {
 }
 
 .search-state-spinner {
+  display: block;
   width: 48px;
   height: 48px;
   margin: 0 auto 8px;
@@ -2901,6 +2936,7 @@ body {
   justify-content: center;
   gap: 4px;
   flex: 1 1 auto;
+  min-height: 53px;
   min-width: 0;
   overflow: hidden;
 }
@@ -2920,6 +2956,7 @@ body {
   margin: 0;
   color: #5f6b7a;
   font-size: 14px;
+  line-height: 1.2;
 }
 
 .filter-button {
@@ -3057,8 +3094,8 @@ body {
 }
 
 .filter-chip.gold {
-  border-color: rgba(204, 153, 0, 0.22);
-  background: rgba(204, 153, 0, 0.08);
+  border-color: rgba(154, 112, 65, 0.22);
+  background: rgba(154, 112, 65, 0.08);
   color: var(--price-modal);
 }
 
@@ -3192,7 +3229,7 @@ body {
 .stat-block {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(2.2em, auto) auto minmax(20px, auto);
+  grid-template-rows: minmax(1.2em, auto) auto minmax(20px, auto);
   align-content: start;
   text-align: center;
 }
@@ -3211,11 +3248,11 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 2.2em;
   color: #989898;
   font-size: 14px;
   line-height: 1.1;
-  margin-bottom: 4px;
+  min-height: 1.2em;
+  margin-bottom: 2px;
 }
 
 .stat-value {
@@ -3243,6 +3280,21 @@ body {
   gap: 4px;
   font-size: 14px;
   font-weight: 500;
+}
+
+.stat-delta > span:first-child {
+  line-height: 1;
+}
+
+.stat-delta > .delta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  font-size: 0.82em;
+  line-height: 1;
+  transform: translateY(-0.04em);
 }
 
 .filter-chip > span:first-child,
@@ -3293,7 +3345,7 @@ body {
   color: #9ca3af;
   font-size: 12px;
   line-height: 1.1;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .meta-value {
@@ -3360,7 +3412,7 @@ body {
 
   .detail-grid .meta-item {
     display: grid;
-    grid-template-rows: minmax(34px, auto) auto;
+    grid-template-rows: minmax(28px, auto) auto;
     align-content: start;
     padding-inline: 8px;
   }
@@ -3370,7 +3422,7 @@ body {
   }
 
   .detail-grid .meta-value {
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .detail-grid .meta-item:nth-child(n + 4) {
@@ -3437,6 +3489,22 @@ body {
   border-radius: 16px;
   padding: 32px 20px;
   text-align: center;
+}
+
+.empty-state-loading {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: max(320px, calc(var(--visual-viewport-height, 100vh) - 240px));
+}
+
+.empty-state-loading h3 {
+  margin: 0;
+}
+
+.empty-state-spinner {
+  margin-bottom: 16px;
 }
 
 .empty-state-icon {
@@ -3522,14 +3590,24 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-weight: 700;
+  font-weight: 500;
+  min-height: 18px;
+  line-height: 1;
+}
+
+.filter-line-label > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
 }
 
 .filter-line-icon {
+  display: block;
   width: 18px;
   height: 18px;
   flex: 0 0 18px;
   object-fit: contain;
+  transform: translateY(-1px);
 }
 
 .filter-line .line {
@@ -3841,7 +3919,7 @@ body {
 
   .detail-grid .meta-item {
     display: grid;
-    grid-template-rows: minmax(34px, auto) auto;
+    grid-template-rows: minmax(28px, auto) auto;
     align-content: start;
     padding-inline: 8px;
   }
@@ -3851,7 +3929,7 @@ body {
   }
 
   .detail-grid .meta-value {
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .stats-row .stat-block,
@@ -3970,6 +4048,20 @@ body,
   overflow-x: clip;
 }
 
+/* Hide page-level scrollbar to prevent the dark vertical gutter artifact
+   that appears at narrow viewports (360–390px) where the scrollbar track
+   visually collides with the card's right edge. Scroll remains functional. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 .site-shell,
 .page,
 .results-toolbar,
@@ -4064,8 +4156,71 @@ body,
 }
 
 @media (max-width: 390px) {
+  .stats-row .stat-block {
+    grid-template-rows: minmax(2.2em, auto) auto minmax(20px, auto);
+  }
+
+  .stats-row .stat-label {
+    min-height: 2.2em;
+    margin-bottom: 4px;
+  }
+
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Hide the 3-column ::after vertical dividers once the grid collapses
+     to 2 columns. Without this, stray vertical lines render at the card's
+     right edge between 361–390px because the dividers were designed for 3 columns. */
+  .detail-grid .meta-item::after {
+    display: none !important;
+  }
+
+  /* Also suppress any inherited ::before from the 1023px breakpoint by default. */
+  .detail-grid .meta-item::before {
+    display: none !important;
+  }
+
+  .detail-grid .meta-item:nth-child(odd):not(:last-child)::after {
+    display: block !important;
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 0;
+    width: 1px;
+    height: calc(100% - 24px);
+    background: var(--line);
+  }
+
+  .detail-grid .meta-item:nth-child(odd):not(:last-child) {
+    padding-right: 12px;
+  }
+
+  .detail-grid .meta-item:nth-child(even) {
+    padding-left: 12px;
+  }
+
+  /* Full-width horizontal divider lines between metadata row groups.
+     Uses ::before with 200% width to span both grid columns. */
+  .detail-grid .meta-item:nth-child(3)::before,
+  .detail-grid .meta-item:nth-child(5)::before {
+    display: block !important;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Keep every item that starts a new row visually aligned with its neighbor,
+     so "Arrivals And Units" and "Latest Update" share the same baseline. */
+  .detail-grid .meta-item:nth-child(n + 3) {
+    padding-top: 12px;
+  }
+
+  .detail-grid .meta-item {
+    align-items: start;
   }
 
   .icon-button {

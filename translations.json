@@ -225,6 +225,10 @@
       "en": "Retry",
       "kn": "Retry"
     },
+    "loading": {
+      "en": "Loading...",
+      "kn": "Loading..."
+    },
     "loading_rows": {
       "en": "Loading rows...",
       "kn": "ಸಾಲನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
