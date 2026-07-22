@@ -1994,8 +1994,8 @@ select {
 
   .history-layout[data-chart-summary-layout="mobile"] {
     grid-template-areas:
-      "summary"
       "chart"
+      "summary"
       "note";
     gap: 12px;
   }
