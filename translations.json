@@ -242,16 +242,16 @@
       "kn": "ಆವಕ ಮತ್ತು ಘಟಕಗಳು"
     },
     "max_price_rs": {
-      "en": "Max Price (Rs.)",
-      "kn": "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)"
+      "en": "Max Price",
+      "kn": "ಗರಿಷ್ಠ ಬೆಲೆ"
     },
     "min_price_rs": {
-      "en": "Min Price (Rs.)",
-      "kn": "ಕನಿಷ್ಠ ಬೆಲೆ (ರೂ.)"
+      "en": "Min Price",
+      "kn": "ಕನಿಷ್ಠ ಬೆಲೆ"
     },
     "modal_price_rs": {
-      "en": "Modal Price (Rs.)",
-      "kn": "ಮಾದರಿ ಬೆಲೆ (ರೂ.)"
+      "en": "Modal Price",
+      "kn": "ಮಾದರಿ ಬೆಲೆ"
     },
     "latest_update": {
       "en": "Latest Update",

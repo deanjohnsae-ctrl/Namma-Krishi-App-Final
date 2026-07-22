@@ -4372,10 +4372,10 @@
   }
 
   function getPriceLabelForCard(kind) {
-    if (kind === "max") return getUiText("max_price_rs", "Maximum price (Rs.)");
-    if (kind === "min") return getUiText("min_price_rs", "Minimum price (Rs.)");
-    if (kind === "modal") return getUiText("modal_price_rs", "Modal price (Rs.)");
-    return getUiText("max_price_rs", "Price (Rs.)");
+    if (kind === "max") return getUiText("max_price_rs", "Maximum price");
+    if (kind === "min") return getUiText("min_price_rs", "Minimum price");
+    if (kind === "modal") return getUiText("modal_price_rs", "Modal price");
+    return getUiText("max_price_rs", "Price");
   }
 
   function getStatTone(kind) {
