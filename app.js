@@ -1,6 +1,7 @@
 (function() {
   const app = document.getElementById("app");
   const LOCALE_STORAGE_KEY = "commodity-dashboard-locale";
+  const APP_DATA_VERSION = "20260724-2";
   const FILTER_HINT_DURATION_MS = 5000;
   const FILTER_HINT_COLLAPSE_MS = 320;
   const MARKET_JUMP_HIGHLIGHT_DURATION_MS = 1800;
@@ -241,7 +242,7 @@
 
   async function loadTranslations() {
     try {
-      const payload = await fetchJson("./translations.json");
+      const payload = await fetchJson(`./translations.json?v=${APP_DATA_VERSION}`);
       state.translations = {
         ui: payload.ui || {},
         commodities: payload.commodities || {},
@@ -261,7 +262,7 @@
 
   async function loadSearchIndex() {
     try {
-      const payload = await fetchJson("./data/search-index.json");
+      const payload = await fetchJson(`./data/search-index.json?v=${APP_DATA_VERSION}`);
       state.searchIndex = {
         commodities: payload.commodities || [],
         markets: payload.markets || [],
@@ -285,7 +286,7 @@
 
   async function loadCategoryGroups() {
     try {
-      const payload = await fetchJson("./data/categories.json");
+      const payload = await fetchJson(`./data/categories.json?v=${APP_DATA_VERSION}`);
       state.categoryGroups = Array.isArray(payload.categories) ? payload.categories : [];
     } catch (error) {
       state.categoryGroups = [];
@@ -304,7 +305,7 @@
 
   async function loadObservations() {
     try {
-      const rows = await fetchJson("./data/observations.json");
+      const rows = await fetchJson(`./data/observations.json?v=${APP_DATA_VERSION}`);
       state.allRows = Array.isArray(rows) ? rows.map(normalizeObservationRow) : [];
     } catch (error) {
       state.allRows = [];
