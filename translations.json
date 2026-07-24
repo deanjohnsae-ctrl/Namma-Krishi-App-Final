@@ -22,7 +22,7 @@
       "kn": "ಟೊಮೇಟೊ, ಮೈಸೂರು, ಅಥವಾ ಸ್ಥಳೀಯ ಎಂದು ಪ್ರಯತ್ನಿಸಿ"
     },
     "search_placeholder_terms": {
-      "en": ["Tomato", "Local", "Mysuru"],
+      "en": ["Tomato", "Local", "Mysuru mango"],
       "kn": ["ಟೊಮೇಟೊ", "ಸ್ಥಳೀಯ", "ಮೈಸೂರು"]
     },
     "search_placeholder_prefix": {
@@ -198,8 +198,8 @@
       "kn": "ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ಆಯ್ಕೆಗಳಿಲ್ಲ."
     },
     "search_idle_body": {
-      "en": "Start typing to see matching suggestions.",
-      "kn": "Start typing to see matching suggestions."
+      "en": "Type at least 3 characters to see matching suggestions.",
+      "kn": "ಹೊಂದಾಣಿಕೆ ಸಲಹೆಗಳನ್ನು ನೋಡಲು ಕನಿಷ್ಠ 3 ಅಕ್ಷರಗಳನ್ನು ಟೈಪ್ ಮಾಡಿ."
     },
     "search_no_results_body": {
       "en": "Try a different commodity, market, or variety name.",
