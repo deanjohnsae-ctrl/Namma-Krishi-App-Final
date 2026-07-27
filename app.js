@@ -728,11 +728,12 @@
       });
     }
 
-    const resultsNode = document.querySelector(`[data-filter-results="${field}"]`);
-    if (resultsNode && resultsNode.classList.contains("is-open")) {
-      resultsNode.innerHTML = renderFilterOptionsMarkup(field);
-      bindDraftFilterToggleEvents(resultsNode);
-    }
+    document.querySelectorAll(`[data-filter-results="${field}"]`).forEach((resultsNode) => {
+      if (resultsNode.classList.contains("is-open")) {
+        resultsNode.innerHTML = renderFilterOptionsMarkup(field);
+        bindDraftFilterToggleEvents(resultsNode);
+      }
+    });
   }
 
   function removeDraftFilterValue(name, value) {
@@ -4316,7 +4317,7 @@
           <h4>${escapeHtml(getFieldLabel(field))}</h4>
         </div>
         <div class="filter-selection-body" data-preserve-scroll-id="filter-mobile-selection-body">
-          <div class="filter-search-results is-open">
+          <div class="filter-search-results is-open" data-preserve-scroll-id="filter-search-results" data-filter-results="${field}" data-filter-field="${field}">
             ${options.length ? options.map((value) => `
               <button
                 type="button"
