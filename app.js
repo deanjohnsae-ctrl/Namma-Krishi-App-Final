@@ -163,6 +163,7 @@
     filterSearches: {},
     pendingFilterSelection: null,
     activeFilterField: "",
+    activeMobileFilterField: "",
     isFilterModalOpen: false,
     isSearchOpen: false,
     searchUiState: "idle",
@@ -363,6 +364,7 @@
     state.filterSearches = {};
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
+    state.activeMobileFilterField = "";
     state.isFilterModalOpen = false;
     state.isSearchOpen = false;
     state.showFilterHint = false;
@@ -394,6 +396,7 @@
     state.filterSearches = {};
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
+    state.activeMobileFilterField = "";
     state.isFilterModalOpen = false;
     state.isSearchOpen = false;
     state.showFilterHint = false;
@@ -448,6 +451,7 @@
       state.filterSearches = buildInitialFilterSearches(derived.context.filters);
       state.pendingFilterSelection = null;
       state.activeFilterField = "";
+      state.activeMobileFilterField = "";
       state.isFilterModalOpen = false;
       state.activeChartDate = null;
       state.expandedRowKey = null;
@@ -464,6 +468,7 @@
       state.filterSearches = {};
       state.pendingFilterSelection = null;
       state.activeFilterField = "";
+      state.activeMobileFilterField = "";
       state.isFilterModalOpen = false;
       state.activeChartDate = null;
       invalidateDerivedDataCaches();
@@ -619,6 +624,7 @@
     state.filterSearches = buildInitialFilterSearches(state.context ? state.context.filters : []);
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
+    state.activeMobileFilterField = "";
     state.isFilterModalOpen = true;
     scheduleRender();
   }
@@ -628,6 +634,7 @@
     state.filterSearches = buildInitialFilterSearches(state.context ? state.context.filters : []);
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
+    state.activeMobileFilterField = "";
     state.isFilterModalOpen = false;
     scheduleRender();
   }
@@ -674,6 +681,16 @@
   function activateFilterField(name) {
     state.activeFilterField = state.activeFilterField === name ? "" : name;
     syncAllFilterFieldUis();
+  }
+
+  function openMobileFilterField(field) {
+    state.activeMobileFilterField = field;
+    scheduleRender();
+  }
+
+  function closeMobileFilterField() {
+    state.activeMobileFilterField = "";
+    scheduleRender();
   }
 
   function toggleDraftFilterValue(name, value) {
@@ -730,6 +747,7 @@
     state.pendingFilterSelection = null;
     if (shouldCloseModal) {
       state.activeFilterField = "";
+      state.activeMobileFilterField = "";
       state.isFilterModalOpen = false;
     }
     state.activeChartDate = null;
@@ -742,6 +760,7 @@
     state.filterDrafts = cloneFilters(state.filters);
     state.pendingFilterSelection = null;
     state.activeFilterField = "";
+    state.activeMobileFilterField = "";
     invalidateDerivedDataCaches();
     state.activeChartDate = null;
     state.expandedRowKey = null;
@@ -2538,11 +2557,23 @@
 
     document.querySelectorAll("[data-filter-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
-        activateFilterField(button.dataset.filterToggle);
+        if (isCompactViewport()) {
+          openMobileFilterField(button.dataset.filterToggle);
+        } else {
+          activateFilterField(button.dataset.filterToggle);
+        }
       });
     });
 
     bindDraftFilterToggleEvents(document);
+
+    document.querySelectorAll("[data-mobile-filter-back]").forEach((button) => {
+      button.addEventListener("click", closeMobileFilterField);
+    });
+
+    document.querySelectorAll("[data-mobile-filter-done]").forEach((button) => {
+      button.addEventListener("click", closeMobileFilterField);
+    });
 
     document.querySelectorAll("[data-remove-draft-filter]").forEach((button) => {
       button.addEventListener("click", (event) => {
@@ -4173,25 +4204,30 @@
       return "";
     }
 
+    const mobileSelectionField = isCompactViewport() ? state.activeMobileFilterField : "";
+
     return `
       <div class="screen-overlay filter-modal-backdrop" data-close-filter-modal="backdrop"></div>
       <section class="filter-dialog" role="dialog" aria-modal="true" aria-label="${escapeAttribute(getUiText("filters_label", "Filters"))}">
-        <div class="dialog-header">
-          <div>
-            <h3>${escapeHtml(getUiText("refine_results", "Refine results"))}</h3>
-            <p class="filter-header-copy">${escapeHtml(getFilterModalHelperCopy())}</p>
+        <div class="filter-dialog-main">
+          <div class="dialog-header">
+            <div>
+              <h3>${escapeHtml(getUiText("refine_results", "Refine results"))}</h3>
+              <p class="filter-header-copy">${escapeHtml(getFilterModalHelperCopy())}</p>
+            </div>
+            <button type="button" class="icon-button close" data-close-filter-modal="button" aria-label="${escapeAttribute(getUiText("close_filters_aria", "Close filters"))}">
+              <img src="${escapeAttribute(ASSETS.close)}" alt="">
+            </button>
           </div>
-          <button type="button" class="icon-button close" data-close-filter-modal="button" aria-label="${escapeAttribute(getUiText("close_filters_aria", "Close filters"))}">
-            <img src="${escapeAttribute(ASSETS.close)}" alt="">
-          </button>
+          <div class="filter-dialog-body" data-preserve-scroll-id="filter-modal-body">
+            ${state.context.filters.map((field) => renderFilterField(field)).join("")}
+          </div>
+          <div class="action-row">
+            <button type="button" class="action-button ghost" data-clear-filter-drafts="true">${escapeHtml(getUiText("clear_filters", "Clear Filters"))}</button>
+            <button type="button" class="action-button solid" data-apply-filter-drafts="true">${escapeHtml(getUiText("apply_filters", "Apply Filters"))}</button>
+          </div>
         </div>
-        <div class="filter-dialog-body" data-preserve-scroll-id="filter-modal-body">
-          ${state.context.filters.map((field) => renderFilterField(field)).join("")}
-        </div>
-        <div class="action-row">
-          <button type="button" class="action-button ghost" data-clear-filter-drafts="true">${escapeHtml(getUiText("clear_filters", "Clear Filters"))}</button>
-          <button type="button" class="action-button solid" data-apply-filter-drafts="true">${escapeHtml(getUiText("apply_filters", "Apply Filters"))}</button>
-        </div>
+        ${mobileSelectionField ? renderMobileFilterSelection(mobileSelectionField) : ""}
       </section>
     `;
   }
@@ -4262,6 +4298,40 @@
               <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check">✓</span>' : ""}</span>
             </button>
           `).join("") : `<p class="filter-empty">${escapeHtml(getUiText("no_matching_options", "No matching options."))}</p>`) : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMobileFilterSelection(field) {
+    const selected = state.filterDrafts[field] || [];
+    const options = getDraftFilterOptions(field, "");
+
+    return `
+      <div class="filter-selection-view" aria-label="${escapeAttribute(getFieldLabel(field))}">
+        <div class="filter-selection-header">
+          <button type="button" class="icon-button back" data-mobile-filter-back="true" aria-label="${escapeAttribute(getUiText("back", "Back"))}">
+            <img src="${escapeAttribute(ASSETS.back)}" alt="">
+          </button>
+          <h4>${escapeHtml(getFieldLabel(field))}</h4>
+        </div>
+        <div class="filter-selection-body" data-preserve-scroll-id="filter-mobile-selection-body">
+          <div class="filter-search-results is-open">
+            ${options.length ? options.map((value) => `
+              <button
+                type="button"
+                class="option-row filter-search-option ${selected.includes(value) ? "selected is-selected" : ""}"
+                data-toggle-draft-filter="${field}"
+                data-toggle-draft-value="${escapeAttribute(value)}"
+              >
+                <span>${escapeHtml(translateEntity(field, value))}</span>
+                <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check">✓</span>' : ""}</span>
+              </button>
+            `).join("") : `<p class="filter-empty">${escapeHtml(getUiText("no_matching_options", "No matching options."))}</p>`}
+          </div>
+        </div>
+        <div class="filter-selection-footer">
+          <button type="button" class="action-button solid" data-mobile-filter-done="true">${escapeHtml(getUiText("done", "Done"))}</button>
         </div>
       </div>
     `;
