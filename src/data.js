@@ -1,104 +1,366 @@
-export const categories = ["ಹಣ್ಣುಗಳು", "ತರಕಾರಿಗಳು", "ಧಾನ್ಯಗಳು", "ಹೂವುಗಳು", "ಮಸಾಲೆ"];
+export const categories = [
+  { id: "fruits", label: { en: "Fruits", kn: "ಹಣ್ಣುಗಳು" } },
+  { id: "vegetables", label: { en: "Vegetables", kn: "ತರಕಾರಿಗಳು" } },
+  { id: "grains", label: { en: "Grains", kn: "ಧಾನ್ಯಗಳು" } },
+  { id: "flowers", label: { en: "Flowers", kn: "ಹೂವುಗಳು" } },
+  { id: "spices", label: { en: "Spices", kn: "ಮಸಾಲೆ" } },
+];
 
-const fruits = ["ಸೇಬು", "ಬಾಳೆ", "ಮಾವು", "ದ್ರಾಕ್ಷಿ", "ಕಿತ್ತಳೆ", "ಪಪ್ಪಾಯ", "ಅನಾನಸ್", "ಸಪೋಟ", "ದಾಳಿಂಬೆ", "ನಿಂಬೆ", "ಪೇರಲ", "ಹಲಸು", "ರಸಬೆರ್ರಿ", "ಸ್ಟ್ರಾಬೆರಿ", "ಕಲ್ಲಂಗಡಿ", "ನೆಲ್ಲಿಕಾಯಿ", "ಖರ್ಜೂರ", "ಸೀತಾಫಲ", "ರಂಬುಟಾನ್", "ಡ್ರ್ಯಾಗನ್ ಹಣ್ಣು", "ಜಾಂಬು ನೇರಳೆ", "ಬೋರ", "ಕಮಲಾಕ್ಷಿ", "ಫಾಲ್ಸಾ", "ಕರಿಂಜ", "ಬೆಟ್ಟದ ನೆಲ್ಲಿ", "ತೆಂಗಿನ ಕಾಯಿ", "ಅಡಿಕೆ", "ಕಬ್ಬು", "ಹುಣಸೆ ಹಣ್ಣು", "ಚಕ್ಕೋತ"];
-const vegetables = ["ಟೊಮೇಟೊ", "ಈರುಳ್ಳಿ", "ಆಲೂಗಡ್ಡೆ", "ಬದನೆಕಾಯಿ", "ಹೂಕೋಸು", "ಎಲೆಕೋಸು", "ಸೌತೆಕಾಯಿ", "ಕ್ಯಾರೆಟ್", "ಬೀನ್ಸ್", "ಪಾಲಕ್", "ಬೆಂಡೆಕಾಯಿ", "ಹಸಿಮೆಣಸು", "ಕುಂಬಳಕಾಯಿ", "ಬಟಾಣಿ", "ಮೂಲಂಗಿ", "ಬೀಟ್ರೂಟ್", "ಅವರೆಕಾಯಿ"];
-const grains = ["ಅಕ್ಕಿ", "ಗೋಧಿ", "ಜೋಳ", "ರಾಗಿ", "ಸಜ್ಜೆ", "ತೊಗರಿ ಬೇಳೆ", "ಹೆಸರು ಬೇಳೆ", "ಉದ್ದಿನ ಬೇಳೆ", "ಕಡಲೆ ಬೇಳೆ", "ಮೆಂತ್ಯ", "ಸಾಸಿವೆ", "ಅವರೆ", "ಹುರುಳಿ", "ಚಾವಳಿ", "ನವಣೆ", "ಬಾರ್ಲಿ", "ಮೆಕ್ಕೆ ಜೋಳ"];
-const flowers = ["ಗುಲಾಬಿ", "ಮಲ್ಲಿಗೆ", "ಸಂಪಿಗೆ", "ಕನಕಾಂಬರ", "ದಾಸವಾಳ", "ಜಾಜಿ", "ಕನ್ನಡೆ ಹೂ", "ತಾವರೆ", "ಚೆಂಡು ಹೂ", "ಕಾಕಡ", "ಸೇವಂತಿಗೆ", "ಕುಂಕುಮ", "ಪಾರಿಜಾತ", "ನಂದಿಬತ್ತಲು", "ಅಬ್ಬಲಿಗೆ", "ಹೊನ್ನೆ ಹೂ", "ರಂಜಾನ್ ಹೂ"];
-const spices = ["ಕಾಳು ಮೆಣಸು", "ಶುಂಠಿ", "ಅರಿಶಿನ", "ದಾಲ್ಚಿನ್ನಿ", "ಏಲಕ್ಕಿ", "ಲವಂಗ", "ಜೀರಿಗೆ", "ಸೌಂಫ್", "ಮೆಂತ್ಯ", "ಕೊತ್ತಂಬರಿ", "ಬಾಯ್ಲಖಾದ", "ಮರ ಮೆಣಸು", "ಸಂಬಾರ", "ಜಾಜಿಕಾಯಿ", "ಪುಟ್ಪುಟ್", "ಒಣ ಮೆಣಸು", "ಬೆಳ್ಳುಳ್ಳಿ"];
+const fruits = [
+  { id: "apple", label: { en: "Apple", kn: "ಸೇಬು" } },
+  { id: "banana", label: { en: "Banana", kn: "ಬಾಳೆ" } },
+  { id: "mango", label: { en: "Mango", kn: "ಮಾವು" } },
+  { id: "grapes", label: { en: "Grapes", kn: "ದ್ರಾಕ್ಷಿ" } },
+  { id: "orange", label: { en: "Orange", kn: "ಕಿತ್ತಳೆ" } },
+  { id: "papaya", label: { en: "Papaya", kn: "ಪಪ್ಪಾಯಿ" } },
+  { id: "pineapple", label: { en: "Pineapple", kn: "ಅನಾನಸ್" } },
+  { id: "sapota", label: { en: "Sapota", kn: "ಸಪೋಟ" } },
+  { id: "pomegranate", label: { en: "Pomegranate", kn: "ದಾಳಿಂಬೆ" } },
+  { id: "lemon", label: { en: "Lemon", kn: "ನಿಂಬೆ" } },
+  { id: "guava", label: { en: "Guava", kn: "ಪೇರಲೆ" } },
+  { id: "jackfruit", label: { en: "Jackfruit", kn: "ಹಲಸು" } },
+  { id: "raspberry", label: { en: "Raspberry", kn: "ರಸಬೆರಿ" } },
+  { id: "strawberry", label: { en: "Strawberry", kn: "ಸ್ಟ್ರಾಬೆರಿ" } },
+  { id: "watermelon", label: { en: "Watermelon", kn: "ಕಲ್ಲಂಗಡಿ" } },
+  { id: "amla", label: { en: "Amla", kn: "ನೆಲ್ಲಿಕಾಯಿ" } },
+  { id: "coconut", label: { en: "Coconut", kn: "ತೆಂಗಿನಕಾಯಿ" } },
+];
+
+const vegetables = [
+  { id: "tomato", label: { en: "Tomato", kn: "ಟೊಮೇಟೊ" } },
+  { id: "onion", label: { en: "Onion", kn: "ಈರುಳ್ಳಿ" } },
+  { id: "potato", label: { en: "Potato", kn: "ಆಲೂಗಡ್ಡೆ" } },
+  { id: "brinjal", label: { en: "Brinjal", kn: "ಬದನೆಕಾಯಿ" } },
+  { id: "cauliflower", label: { en: "Cauliflower", kn: "ಹೂಕೋಸು" } },
+  { id: "cabbage", label: { en: "Cabbage", kn: "ಎಲೆಕೋಸು" } },
+  { id: "cucumber", label: { en: "Cucumber", kn: "ಸೌತೆಕಾಯಿ" } },
+  { id: "carrot", label: { en: "Carrot", kn: "ಕ್ಯಾರೆಟ್" } },
+  { id: "beans", label: { en: "Beans", kn: "ಬೀನ್ಸ್" } },
+  { id: "spinach", label: { en: "Spinach", kn: "ಪಾಲಕ್" } },
+  { id: "okra", label: { en: "Okra", kn: "ಬೆಂಡೆಕಾಯಿ" } },
+  { id: "green-chilli", label: { en: "Green chilli", kn: "ಹಸಿಮೆಣಸು" } },
+  { id: "pumpkin", label: { en: "Pumpkin", kn: "ಕುಂಬಳಕಾಯಿ" } },
+  { id: "peas", label: { en: "Peas", kn: "ಬಟಾಣಿ" } },
+  { id: "radish", label: { en: "Radish", kn: "ಮೂಲಂಗಿ" } },
+  { id: "beetroot", label: { en: "Beetroot", kn: "ಬೀಟ್ರೂಟ್" } },
+  { id: "field-beans", label: { en: "Field beans", kn: "ಅವರೆಕಾಯಿ" } },
+];
+
+const grains = [
+  { id: "rice", label: { en: "Rice", kn: "ಅಕ್ಕಿ" } },
+  { id: "wheat", label: { en: "Wheat", kn: "ಗೋಧಿ" } },
+  { id: "jowar", label: { en: "Jowar", kn: "ಜೋಳ" } },
+  { id: "ragi", label: { en: "Ragi", kn: "ರಾಗಿ" } },
+  { id: "bajra", label: { en: "Bajra", kn: "ಸಜ್ಜೆ" } },
+  { id: "toor-dal", label: { en: "Toor dal", kn: "ತೊಗರಿಬೇಳೆ" } },
+  { id: "green-gram", label: { en: "Green gram", kn: "ಹೆಸರಿಬೇಳೆ" } },
+  { id: "urad-dal", label: { en: "Urad dal", kn: "ಉದ್ದಿನಬೇಳೆ" } },
+  { id: "chana-dal", label: { en: "Chana dal", kn: "ಕಡಲೆಬೇಳೆ" } },
+  { id: "maize", label: { en: "Maize", kn: "ಮೆಕ್ಕೆಜೋಳ" } },
+  { id: "hyacinth-beans", label: { en: "Hyacinth beans", kn: "ಅವರೆ" } },
+  { id: "horse-gram", label: { en: "Horse gram", kn: "ಹುರಳಿ" } },
+];
+
+const flowers = [
+  { id: "rose", label: { en: "Rose", kn: "ಗುಲಾಬಿ" } },
+  { id: "jasmine", label: { en: "Jasmine", kn: "ಮಲ್ಲಿಗೆ" } },
+  { id: "champak", label: { en: "Champak", kn: "ಸಂಪಿಗೆ" } },
+  { id: "crossandra", label: { en: "Crossandra", kn: "ಕನಕಾಂಬರ" } },
+  { id: "hibiscus", label: { en: "Hibiscus", kn: "ದಾಸವಾಳ" } },
+  { id: "jaji", label: { en: "Jaji", kn: "ಜಾಜಿ" } },
+  { id: "lotus", label: { en: "Lotus", kn: "ತಾವರೆ" } },
+  { id: "marigold", label: { en: "Marigold", kn: "ಚೆಂಡು ಹೂ" } },
+  { id: "chrysanthemum", label: { en: "Chrysanthemum", kn: "ಸೇವಂತಿಗೆ" } },
+  { id: "parijata", label: { en: "Parijata", kn: "ಪಾರಿಜಾತ" } },
+];
+
+const spices = [
+  { id: "black-pepper", label: { en: "Black pepper", kn: "ಕರಿಮೆಣಸು" } },
+  { id: "ginger", label: { en: "Ginger", kn: "ಶುಂಠಿ" } },
+  { id: "turmeric", label: { en: "Turmeric", kn: "ಅರಿಶಿನ" } },
+  { id: "cinnamon", label: { en: "Cinnamon", kn: "ದಾಲ್ಚಿನ್ನಿ" } },
+  { id: "cardamom", label: { en: "Cardamom", kn: "ಏಲಕ್ಕಿ" } },
+  { id: "clove", label: { en: "Clove", kn: "ಲವಂಗ" } },
+  { id: "cumin", label: { en: "Cumin", kn: "ಜೀರಿಗೆ" } },
+  { id: "fennel", label: { en: "Fennel", kn: "ಸೋಂಪು" } },
+  { id: "fenugreek", label: { en: "Fenugreek", kn: "ಮೆಂತ್ಯೆ" } },
+  { id: "coriander", label: { en: "Coriander", kn: "ಕೊತ್ತಂಬರಿ" } },
+];
 
 export const commoditiesByCategory = {
-  ಹಣ್ಣುಗಳು: fruits,
-  ತರಕಾರಿಗಳು: vegetables,
-  ಧಾನ್ಯಗಳು: grains,
-  ಹೂವುಗಳು: flowers,
-  ಮಸಾಲೆ: spices,
+  fruits,
+  vegetables,
+  grains,
+  flowers,
+  spices,
 };
 
-export const commodities = Array.from({ length: 9 }, (_, index) => ({
-  id: `commodity-${index + 1}`,
-  name: "ಸೇಬು",
-}));
-
 export const searchResults = [
-  { title: "ಸೇಬು", kind: "Commodity", accent: "green" },
-  { title: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)", kind: "Market", accent: "gold" },
-  { title: "ಕಾಶ್ಮೀರಿ", kind: "Variety", accent: "blue" },
-  { title: "ಕುಲುಮನಾಲಿ", kind: "Variety", accent: "blue" },
+  {
+    id: "apple",
+    title: { en: "Apple", kn: "ಸೇಬು" },
+    kind: "Commodity",
+    accent: "green",
+  },
+  {
+    id: "binny-mill",
+    title: {
+      en: "Binny Mill (Fruits & Vegetables)",
+      kn: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
+    },
+    kind: "Market",
+    accent: "gold",
+  },
+  {
+    id: "kashmiri",
+    title: { en: "Kashmiri", kn: "ಕಾಶ್ಮೀರಿ" },
+    kind: "Variety",
+    accent: "blue",
+  },
+  {
+    id: "royal",
+    title: { en: "Royal", kn: "ರಾಯಲ್" },
+    kind: "Variety",
+    accent: "blue",
+  },
 ];
 
 export const marketOptions = [
-  "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
-  "ದಾವಣಗೆರೆ",
-  "ಹೊಸ್ಕೋಟೆ",
-  "ಕಲಬುರಗಿ",
-  "ಮೈಸೂರು",
+  {
+    id: "binny-mill",
+    label: {
+      en: "Binny Mill (Fruits & Vegetables)",
+      kn: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
+    },
+  },
+  { id: "davanagere", label: { en: "Davanagere", kn: "ದಾವಣಗೆರೆ" } },
+  { id: "hoskote", label: { en: "Hoskote", kn: "ಹೊಸ್ಕೋಟೆ" } },
+  { id: "mysuru", label: { en: "Mysuru", kn: "ಮೈಸೂರು" } },
+  { id: "kalaburagi", label: { en: "Kalaburagi", kn: "ಕಲಬುರಗಿ" } },
 ];
 
-export const varietyOptions = ["ಕಾಶ್ಮೀರಿ", "ಕುಲುಮನಾಲಿ", "ರಾಯಲ್", "ಶಿಮ್ಲಾ"];
+export const varietyOptions = [
+  { id: "kashmiri", label: { en: "Kashmiri", kn: "ಕಾಶ್ಮೀರಿ" } },
+  { id: "royal", label: { en: "Royal", kn: "ರಾಯಲ್" } },
+  { id: "shimla", label: { en: "Shimla", kn: "ಶಿಮ್ಲಾ" } },
+  { id: "kulumanali", label: { en: "Kulumanali", kn: "ಕುಲುಮನಾಲಿ" } },
+];
 
-const stats = [
+const appleStatsFresh = [
   {
-    label: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
-    value: "₹11,000",
-    delta: "-7,000",
+    label: {
+      en: "Minimum price (Rs.)",
+      kn: "ಕನಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹7,800",
+    delta: "+400",
     tone: "blue",
-    deltaTone: "down",
+    deltaTone: "up",
   },
   {
-    label: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    label: {
+      en: "Average price (Rs.)",
+      kn: "ಸರಾಸರಿ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹9,200",
+    delta: "+250",
+    tone: "gold",
+    deltaTone: "up",
+  },
+  {
+    label: {
+      en: "Maximum price (Rs.)",
+      kn: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
     value: "₹11,000",
-    delta: "-7,000",
+    delta: "-300",
+    tone: "red",
+    deltaTone: "down",
+  },
+];
+
+const appleStatsStable = [
+  {
+    label: {
+      en: "Minimum price (Rs.)",
+      kn: "ಕನಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹7,400",
+    delta: "0",
+    tone: "blue",
+    deltaTone: "up",
+  },
+  {
+    label: {
+      en: "Average price (Rs.)",
+      kn: "ಸರಾಸರಿ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹8,850",
+    delta: "-120",
     tone: "gold",
     deltaTone: "down",
   },
   {
-    label: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
-    value: "₹11,000",
-    delta: "-7,000",
+    label: {
+      en: "Maximum price (Rs.)",
+      kn: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹10,500",
+    delta: "-200",
     tone: "red",
-    deltaTone: "up",
+    deltaTone: "down",
+  },
+];
+
+const appleStatsOld = [
+  {
+    label: {
+      en: "Minimum price (Rs.)",
+      kn: "ಕನಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹6,900",
+    delta: "-600",
+    tone: "blue",
+    deltaTone: "down",
+  },
+  {
+    label: {
+      en: "Average price (Rs.)",
+      kn: "ಸರಾಸರಿ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹8,100",
+    delta: "-450",
+    tone: "gold",
+    deltaTone: "down",
+  },
+  {
+    label: {
+      en: "Maximum price (Rs.)",
+      kn: "ಗರಿಷ್ಠ ಬೆಲೆ (ರೂ.)",
+    },
+    value: "₹9,700",
+    delta: "-900",
+    tone: "red",
+    deltaTone: "down",
   },
 ];
 
 export const priceCards = [
   {
     id: "card-1",
-    commodity: "ಸೇಬು",
-    market: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
-    marketLabel: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
-    variety: "ಕಾಶ್ಮೀರಿ",
-    grade: "ಸರಾಸರಿ",
+    commodityId: "apple",
+    marketId: "binny-mill",
+    marketLabel: {
+      en: "Binny Mill (Fruits & Vegetables)",
+      kn: "ಬಿನ್ನಿ ಮಿಲ್ (ಹಣ್ಣು ಮತ್ತು ತರಕಾರಿ)",
+    },
+    varietyId: "kashmiri",
+    grade: {
+      en: "Premium",
+      kn: "ಉತ್ತಮ",
+    },
     arrival: "592",
-    unit: "ಕ್ವಿಂಟಲ್",
-    updatedAt: "03-06-2026",
-    previousUpdate: "27-05-2026",
-    stats,
+    unit: {
+      en: "Quintal",
+      kn: "ಕ್ವಿಂಟಲ್",
+    },
+    updatedAt: "16-07-2026",
+    previousUpdate: "15-07-2026",
+    stats: appleStatsFresh,
+    sourceLabel: {
+      en: "Demo market data",
+      kn: "ಡೆಮೊ ಮಾರುಕಟ್ಟೆ ಡೇಟಾ",
+    },
+    sourceUrl: "",
+    freshnessStatus: "fresh",
+    historyStatus: "ready",
   },
   {
     id: "card-2",
-    commodity: "ಸೇಬು",
-    market: "ದಾವಣಗೆರೆ",
-    marketLabel: "ದಾವಣಗೆರೆ ಮಾರುಕಟ್ಟೆ",
-    variety: "ಕುಲುಮನಾಲಿ",
-    grade: "ಸರಾಸರಿ",
+    commodityId: "apple",
+    marketId: "davanagere",
+    marketLabel: {
+      en: "Davanagere market",
+      kn: "ದಾವಣಗೆರೆ ಮಾರುಕಟ್ಟೆ",
+    },
+    varietyId: "royal",
+    grade: {
+      en: "Standard",
+      kn: "ಸರಾಸರಿ",
+    },
     arrival: "420",
-    unit: "ಕ್ವಿಂಟಲ್",
-    updatedAt: "02-06-2026",
-    previousUpdate: "26-05-2026",
-    stats,
+    unit: {
+      en: "Quintal",
+      kn: "ಕ್ವಿಂಟಲ್",
+    },
+    updatedAt: "14-07-2026",
+    previousUpdate: "12-07-2026",
+    stats: appleStatsStable,
+    sourceLabel: {
+      en: "Demo market data",
+      kn: "ಡೆಮೊ ಮಾರುಕಟ್ಟೆ ಡೇಟಾ",
+    },
+    sourceUrl: "",
+    freshnessStatus: "fresh",
+    historyStatus: "ready",
   },
   {
     id: "card-3",
-    commodity: "ಸೇಬು",
-    market: "ಹೊಸ್ಕೋಟೆ",
-    marketLabel: "ಹೊಸ್ಕೋಟೆ ಮಾರುಕಟ್ಟೆ",
-    variety: "ರಾಯಲ್",
-    grade: "ಉತ್ತಮ",
+    commodityId: "apple",
+    marketId: "hoskote",
+    marketLabel: {
+      en: "Hoskote market",
+      kn: "ಹೊಸ್ಕೋಟೆ ಮಾರುಕಟ್ಟೆ",
+    },
+    varietyId: "shimla",
+    grade: {
+      en: "Standard",
+      kn: "ಸರಾಸರಿ",
+    },
     arrival: "310",
-    unit: "ಕ್ವಿಂಟಲ್",
+    unit: {
+      en: "Quintal",
+      kn: "ಕ್ವಿಂಟಲ್",
+    },
+    updatedAt: "11-07-2026",
+    previousUpdate: "09-07-2026",
+    stats: appleStatsStable,
+    sourceLabel: {
+      en: "Demo market data",
+      kn: "ಡೆಮೊ ಮಾರುಕಟ್ಟೆ ಡೇಟಾ",
+    },
+    sourceUrl: "",
+    freshnessStatus: "fresh",
+    historyStatus: "unavailable",
+  },
+  {
+    id: "card-4",
+    commodityId: "apple",
+    marketId: "mysuru",
+    marketLabel: {
+      en: "Mysuru market",
+      kn: "ಮೈಸೂರು ಮಾರುಕಟ್ಟೆ",
+    },
+    varietyId: "kulumanali",
+    grade: {
+      en: "Standard",
+      kn: "ಸರಾಸರಿ",
+    },
+    arrival: "265",
+    unit: {
+      en: "Quintal",
+      kn: "ಕ್ವಿಂಟಲ್",
+    },
     updatedAt: "03-06-2026",
-    previousUpdate: "25-05-2026",
-    stats,
+    previousUpdate: "27-05-2026",
+    stats: appleStatsOld,
+    sourceLabel: {
+      en: "Demo market data",
+      kn: "ಡೆಮೊ ಮಾರುಕಟ್ಟೆ ಡೇಟಾ",
+    },
+    sourceUrl: "",
+    freshnessStatus: "stale",
+    historyStatus: "error",
   },
 ];
 
@@ -112,8 +374,6 @@ export const assets = {
   close: asset("close.svg"),
   heroBg: asset("hero-bg.png"),
   heroBgMobile: asset("hero-bg-mobile.png"),
-  heroLandscape: asset("hero-landscape.png"),
-  heroFarmer: asset("hero-farmer.png"),
   commodityThumb: asset("commodity-thumb.png"),
   marketThumb: asset("market-thumb.png"),
   graph: asset("graph.png"),
