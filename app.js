@@ -978,29 +978,6 @@
   }
 
   function syncDraftFilterFieldUi(field) {
-    const selected = state.filterDrafts[field] || [];
-
-    const chipZone = document.querySelector(`[data-filter-chip-zone="${field}"]`);
-    if (chipZone) {
-      chipZone.innerHTML = selected.length ? `
-        <div class="filter-chip-row">
-          ${selected.map((value) => `
-            <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
-              <span>${escapeHtml(translateEntity(field, value))}</span>
-              <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
-            </span>
-          `).join("")}
-        </div>
-      ` : "";
-
-      chipZone.querySelectorAll("[data-remove-draft-filter]").forEach((button) => {
-        button.addEventListener("click", (event) => {
-          event.stopPropagation();
-          removeDraftFilterValue(button.dataset.removeDraftFilter, button.dataset.removeDraftValue);
-        });
-      });
-    }
-
     const resultsNode = document.querySelector(`[data-filter-results="${field}"]`);
     if (resultsNode && resultsNode.classList.contains("is-open")) {
       resultsNode.innerHTML = renderFilterOptionsMarkup(field);
@@ -2223,18 +2200,6 @@
       <div class="filter-modal-group">
         <label>${escapeHtml(`${getFieldLabel(field)} ${getUiText("filter_suffix", "filter")}`)}</label>
         <div class="filter-multiselect">
-          <div data-filter-chip-zone="${field}">
-            ${selected.length ? `
-            <div class="filter-chip-row">
-              ${selected.map((value) => `
-                <span class="filter-chip">
-                  <span>${escapeHtml(translateEntity(field, value))}</span>
-                  <button type="button" class="filter-chip-remove" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
-                </span>
-              `).join("")}
-            </div>
-            ` : ""}
-          </div>
           <button
             type="button"
             class="filter-dropdown-trigger ${isOpen ? "is-open" : ""}"
@@ -2350,18 +2315,6 @@
             <span>${escapeHtml(getFieldLabel(field))}</span>
           </span>
           <span class="line"></span>
-        </div>
-        <div data-filter-chip-zone="${field}">
-          ${selected.length ? `
-            <div class="chip-row wrap filter-chip-row">
-              ${selected.map((value) => `
-                <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
-                  <span>${escapeHtml(translateEntity(field, value))}</span>
-                  <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
-                </span>
-              `).join("")}
-            </div>
-          ` : ""}
         </div>
         <button
           type="button"
@@ -5007,18 +4960,6 @@
           </span>
           <span class="line"></span>
         </div>
-        <div data-filter-chip-zone="${field}">
-          ${selected.length ? `
-            <div class="chip-row wrap filter-chip-row">
-              ${selected.map((value) => `
-                <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
-                  <span>${escapeHtml(translateEntity(field, value))}</span>
-                  <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
-                </span>
-              `).join("")}
-            </div>
-          ` : ""}
-        </div>
         <button
           type="button"
           class="filter-trigger filter-dropdown-trigger"
@@ -5217,6 +5158,38 @@
     ].filter(Boolean);
 
     return details.slice(0, 5);
+  }
+
+  function renderCardDelta(delta) {
+    if (delta === null) {
+      return `
+        <div class="stat-delta flat">
+          <span class="stat-delta-content">
+            <span class="stat-delta-value">-</span>
+          </span>
+        </div>
+      `;
+    }
+
+    if (delta === 0) {
+      return `
+        <div class="stat-delta up">
+          <span class="stat-delta-content">
+            <span class="stat-delta-value">&#8377; 0</span>
+          </span>
+        </div>
+      `;
+    }
+
+    const isGain = delta > 0;
+    return `
+      <div class="stat-delta ${isGain ? "up" : "down"}">
+        <span class="stat-delta-content">
+          <span class="stat-delta-value">&#8377; ${isGain ? "+" : "-"}${formatCurrency(Math.abs(delta))}</span>
+          <span class="delta-icon" aria-hidden="true">${isGain ? "&#9650;" : "&#9660;"}</span>
+        </span>
+      </div>
+    `;
   }
 
   function formatSourceName(sourceId) {

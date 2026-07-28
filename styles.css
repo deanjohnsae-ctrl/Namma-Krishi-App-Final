@@ -3462,17 +3462,29 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 20px;
-  gap: 4px;
+  min-height: 1.4em;
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.stat-delta > span:first-child {
+.stat-delta-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.stat-delta-value {
   line-height: 1;
 }
 
-.stat-delta > .delta-icon {
+.stat-delta .delta-icon {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3847,11 +3859,6 @@ body {
 
 .filter-chip-row::-webkit-scrollbar {
   display: none;
-}
-
-.filter-modal-group [data-filter-chip-zone] {
-  min-width: 0;
-  max-width: 100%;
 }
 
 .filter-chip-row .filter-chip {
@@ -4525,8 +4532,13 @@ html::-webkit-scrollbar {
   }
 
   .stats-row .stat-delta {
+    min-height: 1.5em;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .stats-row .stat-delta-content {
     gap: 2px;
-    font-size: 11px;
   }
 
   .detail-grid {
