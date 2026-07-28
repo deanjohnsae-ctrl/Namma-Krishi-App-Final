@@ -901,8 +901,7 @@
     state.isMarketJumpOpen = false;
     state.filterDrafts = cloneFilters(state.filters);
     state.filterSearches = buildInitialFilterSearches(state.context ? state.context.filters : []);
-    state.pendingFilterSelection = null;
-    state.activeFilterField = "";
+    resetFilterModalViewState();
     state.isFilterModalOpen = true;
     scheduleRender();
   }
@@ -910,10 +909,14 @@
   function closeFilterModal() {
     state.filterDrafts = cloneFilters(state.filters);
     state.filterSearches = buildInitialFilterSearches(state.context ? state.context.filters : []);
-    state.pendingFilterSelection = null;
-    state.activeFilterField = "";
+    resetFilterModalViewState();
     state.isFilterModalOpen = false;
     scheduleRender();
+  }
+
+  function resetFilterModalViewState() {
+    state.pendingFilterSelection = null;
+    state.activeFilterField = "";
   }
 
   function openSearchPanel() {
@@ -945,14 +948,16 @@
   }
 
   function updateFilterSearch(name, value, selectionStart, selectionEnd) {
-    state.activeFilterField = name;
     state.filterSearches[name] = value;
     state.pendingFilterSelection = {
       hadFocus: true,
       field: name,
       selectionStart,
       selectionEnd,
+      resetResultsScroll: true,
     };
+
+    state.activeFilterField = name;
     syncFilterFieldUi(name);
   }
 
@@ -968,6 +973,7 @@
     } else {
       state.filterDrafts[name] = [...selected, value];
     }
+
     syncDraftFilterFieldUi(name);
   }
 
@@ -991,7 +997,6 @@
         button.addEventListener("click", (event) => {
           event.stopPropagation();
           removeDraftFilterValue(button.dataset.removeDraftFilter, button.dataset.removeDraftValue);
-          commitFilterDrafts({ closeModal: false });
         });
       });
     }
@@ -1015,7 +1020,7 @@
     state.pendingFilterSelection = null;
     state.isMarketJumpOpen = false;
     if (shouldCloseModal) {
-      state.activeFilterField = "";
+      resetFilterModalViewState();
       state.isFilterModalOpen = false;
     }
     state.activeChartDate = null;
@@ -1026,8 +1031,7 @@
   function removeAppliedFilterValue(name, value) {
     state.filters[name] = (state.filters[name] || []).filter((entry) => entry !== value);
     state.filterDrafts = cloneFilters(state.filters);
-    state.pendingFilterSelection = null;
-    state.activeFilterField = "";
+    resetFilterModalViewState();
     state.isMarketJumpOpen = false;
     invalidateDerivedDataCaches();
     state.activeChartDate = null;
@@ -1044,7 +1048,7 @@
       state.filterDrafts[name] = [];
       state.filterSearches[name] = "";
     });
-    commitFilterDrafts();
+    scheduleRender();
   }
 
   function setActiveChartDate(date) {
@@ -1636,6 +1640,13 @@
     }
 
     restoreFocusedInputState(`[data-filter-search="${snapshot.field}"]`, snapshot);
+
+    if (snapshot.resetResultsScroll) {
+      const resultsNode = document.querySelector(`[data-filter-results="${snapshot.field}"]`);
+      if (resultsNode) {
+        resultsNode.scrollTop = 0;
+      }
+    }
   }
 
   function captureFocusedInputState(selector) {
@@ -2206,6 +2217,7 @@
     const selected = state.filterDrafts[field] || [];
     const options = getDraftFilterOptions(field, "");
     const isOpen = state.activeFilterField === field;
+    const summary = getFilterTriggerSummary(field, selected);
 
     return `
       <div class="filter-modal-group">
@@ -2272,6 +2284,23 @@
     `).join("");
   }
 
+  function getFilterSelectionCountText(count) {
+    if (count === 1) {
+      return getUiText("filter_selected_one", "1 selected");
+    }
+    return getUiText("filter_selected_many", "{count} selected").replace("{count}", String(count));
+  }
+
+  function getFilterTriggerSummary(field, selected) {
+    if (!selected.length) {
+      return getAllLabel(field);
+    }
+    if (selected.length === 1) {
+      return translateEntity(field, selected[0]);
+    }
+    return getFilterSelectionCountText(selected.length);
+  }
+
   function syncFilterFieldUi(field) {
     const resultsNode = document.querySelector(`[data-filter-results="${field}"]`);
     if (!resultsNode) {
@@ -2305,6 +2334,54 @@
         node.innerHTML = "";
       }
     });
+  }
+
+  function renderFilterField(field) {
+    const usesDedicatedMobileView = isCompactViewport();
+    const selected = state.filterDrafts[field] || [];
+    const options = usesDedicatedMobileView ? [] : getDraftFilterOptions(field, "");
+    const isOpen = !usesDedicatedMobileView && state.activeFilterField === field;
+
+    return `
+      <div class="filter-group filter-modal-group">
+        <div class="filter-line">
+          <span class="filter-line-label ${escapeAttribute(getFilterFieldToneClass(field))}">
+            ${field === "market" || field === "variety" ? `<img class="filter-line-icon" src="${escapeAttribute(getSuggestionIcon(field))}" alt="" aria-hidden="true">` : ""}
+            <span>${escapeHtml(getFieldLabel(field))}</span>
+          </span>
+          <span class="line"></span>
+        </div>
+        <div data-filter-chip-zone="${field}">
+          ${selected.length ? `
+            <div class="chip-row wrap filter-chip-row">
+              ${selected.map((value) => `
+                <span class="filter-chip ${escapeAttribute(getFilterFieldToneClass(field))}">
+                  <span>${escapeHtml(translateEntity(field, value))}</span>
+                  <button type="button" class="filter-chip-remove chip-close" data-remove-draft-filter="${field}" data-remove-draft-value="${escapeAttribute(value)}" aria-label="${escapeAttribute(`${getUiText("remove_value_prefix", "Remove")} ${translateEntity(field, value)}`)}">&times;</button>
+                </span>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
+        <button
+          type="button"
+          class="filter-trigger filter-dropdown-trigger"
+          data-filter-toggle="${field}"
+          aria-expanded="${isOpen ? "true" : "false"}"
+        >
+          <span class="filter-trigger-copy">
+            <span class="filter-trigger-label">${escapeHtml(getUiText("tap_to_select", "Tap to Select"))}</span>
+            <span class="filter-trigger-value">${escapeHtml(summary)}</span>
+          </span>
+          <span class="filter-chevron ${isOpen ? "expanded" : ""}" aria-hidden="true"></span>
+        </button>
+        ${usesDedicatedMobileView ? "" : `
+          <div class="option-list filter-search-results ${isOpen ? "is-open" : ""}" data-preserve-scroll-id="filter-search-results" data-filter-results="${field}" data-filter-field="${field}">
+            ${isOpen ? (options.length ? renderFilterOptionsMarkup(field) : `<p class="filter-empty">${escapeHtml(getUiText("no_matching_options", "No matching options."))}</p>`) : ""}
+          </div>
+        `}
+      </div>
+    `;
   }
 
   function renderResults(rows) {
@@ -3075,7 +3152,6 @@
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         removeDraftFilterValue(button.dataset.removeDraftFilter, button.dataset.removeDraftValue);
-        commitFilterDrafts({ closeModal: false });
       });
     });
 
@@ -4920,6 +4996,7 @@
     const selected = state.filterDrafts[field] || [];
     const options = getDraftFilterOptions(field, "");
     const isOpen = state.activeFilterField === field;
+    const summary = getFilterTriggerSummary(field, selected);
 
     return `
       <div class="filter-group filter-modal-group">
@@ -4948,7 +5025,10 @@
           data-filter-toggle="${field}"
           aria-expanded="${isOpen ? "true" : "false"}"
         >
-          <span>${escapeHtml(getUiText("tap_to_select", "Tap to Select"))}</span>
+          <span class="filter-trigger-copy">
+            <span class="filter-trigger-label">${escapeHtml(getUiText("tap_to_select", "Tap to Select"))}</span>
+            <span class="filter-trigger-value">${escapeHtml(summary)}</span>
+          </span>
           <span class="filter-chevron ${isOpen ? "expanded" : ""}" aria-hidden="true"></span>
         </button>
         <div class="option-list filter-search-results ${isOpen ? "is-open" : ""}" data-preserve-scroll-id="filter-search-results" data-filter-results="${field}" data-filter-field="${field}">
@@ -4960,7 +5040,7 @@
               data-toggle-draft-value="${escapeAttribute(value)}"
             >
               <span>${escapeHtml(translateEntity(field, value))}</span>
-              <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check">✓</span>' : ""}</span>
+              <span class="checkbox-box">${selected.includes(value) ? '<span class="checkbox-check" aria-hidden="true"></span>' : ""}</span>
             </button>
           `).join("") : `<p class="filter-empty">${escapeHtml(getUiText("no_matching_options", "No matching options."))}</p>`) : ""}
         </div>
@@ -5031,7 +5111,7 @@
         <div class="stats-row" style="--stat-columns:${Math.min(priceColumns.length, 3)}">
           ${priceColumns.map((column) => `
             <div class="stat-block">
-              <div class="stat-label">${escapeHtml(getPriceLabelForCard(column.kind, row))}</div>
+              <div class="stat-label">${renderPriceLabelForCard(column.kind, row)}</div>
               <div class="stat-value ${escapeAttribute(getStatTone(column.kind))}">${escapeHtml(formatCurrencyDisplay(row[column.key]))}</div>
               ${renderCardDelta(getPreviousPriceDelta(row, column.key, previousRow))}
             </div>
@@ -5079,6 +5159,19 @@
     if (kind === "min") return `${getUiText("min_price_rs", "Minimum price")}${suffix}`;
     if (kind === "modal") return `${getUiText("modal_price_rs", "Modal price")}${suffix}`;
     return `${getUiText("max_price_rs", "Price")}${suffix}`;
+  }
+
+  function renderPriceLabelForCard(kind, row) {
+    const label = getPriceLabelForCard(kind, row);
+    const splitIndex = label.indexOf(" ");
+    if (splitIndex === -1) {
+      return `<span class="stat-label-line">${escapeHtml(label)}</span>`;
+    }
+
+    return `
+      <span class="stat-label-line">${escapeHtml(label.slice(0, splitIndex))}</span>
+      <span class="stat-label-line">${escapeHtml(label.slice(splitIndex + 1))}</span>
+    `;
   }
 
   function getStatTone(kind) {
